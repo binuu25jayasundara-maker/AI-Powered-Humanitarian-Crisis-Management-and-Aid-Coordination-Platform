@@ -1,1 +1,1 @@
-# AI-Powered-Humanitarian-Crisis-Management-and-Aid-Coordination-Platform
+AI-humanitarian-crisis-management
