@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { CampaignKpis, Donation } from '../types';
-import { DollarSign, Package, AlertTriangle, Plus, Filter, CheckCircle2, X } from 'lucide-react';
+import { DollarSign, Package, AlertTriangle, Plus, Filter, CheckCircle2, X, FileText } from 'lucide-react';
 
 export const DonorsCampaignsPage: React.FC = () => {
   const [kpis, setKpis] = useState<CampaignKpis | null>(null);
@@ -57,15 +57,15 @@ export const DonorsCampaignsPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div style={{ padding: '28px 36px', maxWidth: '1400px', margin: '0 auto', backgroundColor: '#EDF6FF', minHeight: '100%' }}>
       {/* Toast Notification */}
       {toastMessage && (
         <div style={{
-          backgroundColor: '#ecfdf5',
-          border: '1px solid #10b981',
-          color: '#065f46',
+          backgroundColor: '#E8F9F2',
+          border: '1px solid #12A86B',
+          color: '#0D9665',
           padding: '14px 20px',
-          borderRadius: '8px',
+          borderRadius: '12px',
           marginBottom: '20px',
           display: 'flex',
           alignItems: 'center',
@@ -73,40 +73,54 @@ export const DonorsCampaignsPage: React.FC = () => {
           fontWeight: 600,
           fontSize: '14px'
         }}>
-          <CheckCircle2 size={18} color="#059669" />
+          <CheckCircle2 size={18} color="#12A86B" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Page Header */}
+      {/* Top Banner / Breadcrumb style header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: '28px'
+        marginBottom: '24px'
       }}>
         <div>
-          <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
-            Donors & Campaigns
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <span style={{
+              backgroundColor: '#0866C6',
+              color: '#ffffff',
+              fontSize: '11px',
+              fontWeight: 800,
+              padding: '2px 8px',
+              borderRadius: '6px'
+            }}>
+              10
+            </span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#526784', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Donors &amp; Campaigns
+            </span>
+          </div>
+          <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#102B5C', letterSpacing: '-0.02em', margin: 0 }}>
+            Campaigns &amp; Aid Distribution
           </h1>
-          <p style={{ color: '#64748b', fontSize: '14px', marginTop: '4px' }}>
-            Overview of fundraising campaigns, supply tracking, and donation logs
-          </p>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
           style={{
-            backgroundColor: '#1d4ed8',
+            backgroundColor: '#12A86B',
             color: '#ffffff',
-            padding: '11px 20px',
+            padding: '10px 20px',
             fontSize: '14px',
             fontWeight: 700,
-            borderRadius: '8px',
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            boxShadow: '0 2px 4px rgba(29, 78, 216, 0.25)'
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 4px 10px rgba(18, 168, 107, 0.25)'
           }}
         >
           <Plus size={18} />
@@ -114,180 +128,233 @@ export const DonorsCampaignsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* 3 Metric KPI Cards (Exact Screenshot 10 layout) */}
+      {/* 3 Metric KPI Cards (Matching Screenshot 10) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
         gap: '20px',
-        marginBottom: '28px'
+        marginBottom: '24px'
       }}>
-        {/* Card 1: Total Funds Raised */}
-        <div className="card" style={{ padding: '22px 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>Total Funds Raised</span>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              backgroundColor: '#eff6ff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <DollarSign size={20} color="#1d4ed8" />
-            </div>
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', marginTop: '10px' }}>
-            LKR {kpis?.totalRaisedLkr.toLocaleString() ?? '4,200,000'}
-          </div>
-          <div style={{ fontSize: '13px', color: '#64748b', marginTop: '6px' }}>
-            Goal: LKR {kpis?.totalGoalLkr.toLocaleString() ?? '5,000,000'} ({kpis?.overallProgressPercent ?? 84}%)
-          </div>
-          {/* Progress bar */}
-          <div style={{
-            width: '100%',
-            height: '8px',
-            backgroundColor: '#e2e8f0',
-            borderRadius: '999px',
-            marginTop: '12px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              width: `${kpis?.overallProgressPercent ?? 84}%`,
-              height: '100%',
-              backgroundColor: '#1d4ed8',
-              borderRadius: '999px'
-            }} />
-          </div>
-        </div>
-
-        {/* Card 2: Supplies & Items */}
-        <div className="card" style={{ padding: '22px 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>Supplies & Items</span>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              backgroundColor: '#f0fdf4',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Package size={20} color="#16a34a" />
-            </div>
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', marginTop: '10px' }}>
-            {kpis?.totalSuppliesAndItemsCount.toLocaleString() ?? '1,284'}
-          </div>
-          <div style={{ fontSize: '13px', color: '#64748b', marginTop: '6px' }}>
-            Medical & In-Kind Relief Packs Received
-          </div>
-          <div style={{ marginTop: '14px', fontSize: '12px', fontWeight: 600, color: '#16a34a' }}>
-            ✓ Verified for dispatch & sorting
-          </div>
-        </div>
-
-        {/* Card 3: Active Waste Flags */}
-        <div className="card" style={{ padding: '22px 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>Active Waste Flags</span>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              backgroundColor: '#fef3c7',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <AlertTriangle size={20} color="#d97706" />
-            </div>
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#0f172a', marginTop: '10px' }}>
-            {kpis?.activeWasteFlagsCount ?? 3}
-          </div>
-          <div style={{ fontSize: '13px', color: '#64748b', marginTop: '6px' }}>
-            Supplies flagged for quality disposal review
-          </div>
-          <div style={{ marginTop: '14px', fontSize: '12px', fontWeight: 600, color: '#d97706' }}>
-            ⚠ Quarantine inspections ongoing
-          </div>
-        </div>
-      </div>
-
-      {/* Campaign Details Card: Flood Relief 2024 */}
-      <div className="card" style={{ marginBottom: '28px', padding: '26px 28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
-              Flood Relief 2024
-            </h2>
-            <span className="badge badge-green">Active Campaign</span>
-          </div>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: '#1d4ed8' }}>
-            LKR {kpis?.activeCampaign?.raisedAmount.toLocaleString() ?? '4,200,000'} / LKR {kpis?.activeCampaign?.goalAmount.toLocaleString() ?? '5,000,000'}
-          </div>
-        </div>
-
-        {/* Overall Bar */}
+        {/* Card 1: Total Funds */}
         <div style={{
-          width: '100%',
-          height: '10px',
-          backgroundColor: '#e2e8f0',
-          borderRadius: '999px',
-          overflow: 'hidden',
-          marginBottom: '20px'
+          backgroundColor: '#FFFFFF',
+          borderRadius: '14px',
+          border: '1px solid #D5E4F3',
+          padding: '20px 24px',
+          boxShadow: '0 2px 6px rgba(11, 59, 112, 0.04)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '18px'
         }}>
           <div style={{
-            width: `${kpis?.activeCampaign?.progressPercent ?? 84}%`,
-            height: '100%',
-            backgroundColor: '#1d4ed8',
-            borderRadius: '999px'
-          }} />
+            width: '54px',
+            height: '54px',
+            borderRadius: '12px',
+            backgroundColor: '#12A86B',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#FFFFFF',
+            flexShrink: 0
+          }}>
+            <DollarSign size={28} />
+          </div>
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#526784' }}>Total</div>
+            <div style={{ fontSize: '26px', fontWeight: 800, color: '#102B5C', marginTop: '2px' }}>
+              LKR 4.2M
+            </div>
+          </div>
         </div>
 
-        {/* Resource Allocation Breakdown */}
-        <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '12px' }}>
-            Resource Allocation Distribution:
+        {/* Card 2: Medical Items */}
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: '14px',
+          border: '1px solid #D5E4F3',
+          padding: '20px 24px',
+          boxShadow: '0 2px 6px rgba(11, 59, 112, 0.04)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '18px'
+        }}>
+          <div style={{
+            width: '54px',
+            height: '54px',
+            borderRadius: '12px',
+            backgroundColor: '#0866C6',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#FFFFFF',
+            flexShrink: 0
+          }}>
+            <Package size={28} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-            <div style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                <span style={{ color: '#475569', fontWeight: 600 }}>Food & Rations</span>
-                <span style={{ fontWeight: 700, color: '#1d4ed8' }}>40%</span>
-              </div>
-              <div style={{ height: '6px', backgroundColor: '#e2e8f0', borderRadius: '999px', marginTop: '8px' }}>
-                <div style={{ width: '40%', height: '100%', backgroundColor: '#1d4ed8', borderRadius: '999px' }} />
-              </div>
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#526784' }}>Medical items</div>
+            <div style={{ fontSize: '26px', fontWeight: 800, color: '#102B5C', marginTop: '2px' }}>
+              {kpis?.totalSuppliesAndItemsCount ? kpis.totalSuppliesAndItemsCount.toLocaleString() : '1,284'}
             </div>
+          </div>
+        </div>
 
-            <div style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                <span style={{ color: '#475569', fontWeight: 600 }}>Medical Supplies</span>
-                <span style={{ fontWeight: 700, color: '#0d9488' }}>35%</span>
-              </div>
-              <div style={{ height: '6px', backgroundColor: '#e2e8f0', borderRadius: '999px', marginTop: '8px' }}>
-                <div style={{ width: '35%', height: '100%', backgroundColor: '#0d9488', borderRadius: '999px' }} />
-              </div>
-            </div>
-
-            <div style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                <span style={{ color: '#475569', fontWeight: 600 }}>Temporary Shelter</span>
-                <span style={{ fontWeight: 700, color: '#d97706' }}>25%</span>
-              </div>
-              <div style={{ height: '6px', backgroundColor: '#e2e8f0', borderRadius: '999px', marginTop: '8px' }}>
-                <div style={{ width: '25%', height: '100%', backgroundColor: '#d97706', borderRadius: '999px' }} />
-              </div>
+        {/* Card 3: Disposal */}
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: '14px',
+          border: '1px solid #D5E4F3',
+          padding: '20px 24px',
+          boxShadow: '0 2px 6px rgba(11, 59, 112, 0.04)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '18px'
+        }}>
+          <div style={{
+            width: '54px',
+            height: '54px',
+            borderRadius: '12px',
+            backgroundColor: '#FFB51B',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#FFFFFF',
+            flexShrink: 0
+          }}>
+            <AlertTriangle size={28} />
+          </div>
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: '#526784' }}>Disposal</div>
+            <div style={{ fontSize: '26px', fontWeight: 800, color: '#102B5C', marginTop: '2px' }}>
+              {kpis?.activeWasteFlagsCount ?? 3}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Donations Table (Screenshot 10) */}
-      <div className="card" style={{ padding: '24px 28px' }}>
+      {/* Campaign Details & Recent Donations in Grid (Matching Screenshot 10) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+        {/* Left: Campaign Flood Relief 2024 */}
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: '14px',
+          border: '1px solid #D5E4F3',
+          padding: '24px 28px',
+          boxShadow: '0 2px 6px rgba(11, 59, 112, 0.04)'
+        }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#102B5C', margin: '0 0 8px' }}>
+            Campaign: Flood Relief 2024
+          </h2>
+          <div style={{ fontSize: '13px', color: '#526784', marginBottom: '14px' }}>
+            Goal: LKR 5M
+          </div>
+
+          {/* Progress bar with primary blue */}
+          <div style={{
+            width: '100%',
+            height: '10px',
+            backgroundColor: '#EDF6FF',
+            borderRadius: '9999px',
+            overflow: 'hidden',
+            marginBottom: '16px'
+          }}>
+            <div style={{
+              width: '84%',
+              height: '100%',
+              backgroundColor: '#0866C6',
+              borderRadius: '9999px'
+            }} />
+          </div>
+
+          {/* Breakdown percentages */}
+          <div style={{ fontSize: '13px', color: '#526784', fontWeight: 600, marginBottom: '24px' }}>
+            Food 40% · Medical 35% · Shelter 25%
+          </div>
+
+          <button
+            onClick={() => alert('Generating Comprehensive Campaign Audit Report...')}
+            style={{
+              backgroundColor: '#12A86B',
+              color: '#ffffff',
+              padding: '12px 20px',
+              fontSize: '14px',
+              fontWeight: 700,
+              borderRadius: '10px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              width: '100%',
+              boxShadow: '0 4px 10px rgba(18, 168, 107, 0.2)'
+            }}
+          >
+            <FileText size={18} />
+            <span>Generate report</span>
+          </button>
+        </div>
+
+        {/* Right: Recent Donations Preview Table */}
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: '14px',
+          border: '1px solid #D5E4F3',
+          padding: '24px 28px',
+          boxShadow: '0 2px 6px rgba(11, 59, 112, 0.04)'
+        }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#102B5C', margin: '0 0 16px' }}>
+            Recent donations
+          </h3>
+
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #EDF6FF', color: '#526784', fontSize: '12px', textTransform: 'uppercase' }}>
+                <th style={{ padding: '8px 10px', fontWeight: 600 }}>Donor</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600 }}>Amount</th>
+                <th style={{ padding: '8px 10px', fontWeight: 600 }}>Flag</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style={{ borderBottom: '1px solid #EDF6FF', fontSize: '13px' }}>
+                <td style={{ padding: '12px 10px', color: '#102B5C', fontWeight: 600 }}>A. Silva</td>
+                <td style={{ padding: '12px 10px', color: '#102B5C' }}>25,000</td>
+                <td style={{ padding: '12px 10px', color: '#526784' }}>-</td>
+              </tr>
+              <tr style={{ borderBottom: '1px solid #EDF6FF', fontSize: '13px' }}>
+                <td style={{ padding: '12px 10px', color: '#102B5C', fontWeight: 600 }}>Org X</td>
+                <td style={{ padding: '12px 10px', color: '#102B5C' }}>300,000</td>
+                <td style={{ padding: '12px 10px' }}>
+                  <span style={{
+                    backgroundColor: '#FFB51B',
+                    color: '#ffffff',
+                    padding: '3px 12px',
+                    borderRadius: '9999px',
+                    fontSize: '11px',
+                    fontWeight: 700
+                  }}>
+                    Urgent
+                  </span>
+                </td>
+              </tr>
+              <tr style={{ fontSize: '13px' }}>
+                <td style={{ padding: '12px 10px', color: '#102B5C', fontWeight: 600 }}>K. Perera</td>
+                <td style={{ padding: '12px 10px', color: '#102B5C' }}>5,000</td>
+                <td style={{ padding: '12px 10px', color: '#526784' }}>-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Full Donations Log Table */}
+      <div style={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: '14px',
+        border: '1px solid #D5E4F3',
+        padding: '24px 28px',
+        boxShadow: '0 2px 6px rgba(11, 59, 112, 0.04)'
+      }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -295,23 +362,25 @@ export const DonorsCampaignsPage: React.FC = () => {
           marginBottom: '20px'
         }}>
           <div>
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#0f172a' }}>
-              Recent Donations
+            <h3 style={{ fontSize: '17px', fontWeight: 800, color: '#102B5C', margin: 0 }}>
+              All Logged Donations
             </h3>
-            <p style={{ fontSize: '13px', color: '#64748b' }}>
-              Financial and in-kind donor transactions logged in the system
+            <p style={{ fontSize: '13px', color: '#526784', margin: '4px 0 0' }}>
+              Complete audit ledger of inbound relief contributions
             </p>
           </div>
           <button style={{
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            color: '#475569',
+            backgroundColor: '#EDF6FF',
+            border: '1px solid #D5E4F3',
+            color: '#0866C6',
             padding: '8px 14px',
             fontSize: '13px',
-            borderRadius: '6px',
+            borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px'
+            gap: '6px',
+            cursor: 'pointer',
+            fontWeight: 600
           }}>
             <Filter size={15} />
             <span>Filter</span>
@@ -320,7 +389,7 @@ export const DonorsCampaignsPage: React.FC = () => {
 
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: '12px', textTransform: 'uppercase' }}>
+            <tr style={{ borderBottom: '2px solid #EDF6FF', color: '#526784', fontSize: '12px', textTransform: 'uppercase' }}>
               <th style={{ padding: '12px 14px' }}>Donor Name</th>
               <th style={{ padding: '12px 14px' }}>Type / Item Notes</th>
               <th style={{ padding: '12px 14px' }}>Amount (LKR)</th>
@@ -331,34 +400,59 @@ export const DonorsCampaignsPage: React.FC = () => {
           </thead>
           <tbody>
             {donations.map((d) => (
-              <tr key={d.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}>
-                <td style={{ padding: '14px', fontWeight: 700, color: '#0f172a' }}>
+              <tr key={d.id} style={{ borderBottom: '1px solid #EDF6FF', fontSize: '13px' }}>
+                <td style={{ padding: '14px', fontWeight: 700, color: '#102B5C' }}>
                   {d.donorName}
                 </td>
-                <td style={{ padding: '14px', color: '#475569' }}>
+                <td style={{ padding: '14px', color: '#526784' }}>
                   {d.itemCount > 0 ? `In-Kind Supplies (${d.itemCount} items)` : 'Financial Transfer'}
                 </td>
-                <td style={{ padding: '14px', fontWeight: 700, color: '#0f172a' }}>
+                <td style={{ padding: '14px', fontWeight: 700, color: '#102B5C' }}>
                   LKR {d.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </td>
-                <td style={{ padding: '14px', color: '#64748b' }}>
+                <td style={{ padding: '14px', color: '#526784' }}>
                   {d.campaignTitle}
                 </td>
                 <td style={{ padding: '14px' }}>
                   {d.flag === 'Urgent' ? (
-                    <span className="badge badge-amber" style={{ color: '#dc2626', backgroundColor: '#fee2e2' }}>
+                    <span style={{
+                      backgroundColor: '#FFB51B',
+                      color: '#ffffff',
+                      padding: '3px 10px',
+                      borderRadius: '9999px',
+                      fontSize: '11px',
+                      fontWeight: 700
+                    }}>
                       Urgent
                     </span>
                   ) : d.flag === 'Disposal' ? (
-                    <span className="badge badge-amber">
+                    <span style={{
+                      backgroundColor: '#FFF8E6',
+                      color: '#FFB51B',
+                      border: '1px solid rgba(255,181,27,0.4)',
+                      padding: '3px 10px',
+                      borderRadius: '9999px',
+                      fontSize: '11px',
+                      fontWeight: 700
+                    }}>
                       Disposal
                     </span>
                   ) : (
-                    <span style={{ color: '#94a3b8' }}>-</span>
+                    <span style={{ color: '#526784' }}>-</span>
                   )}
                 </td>
                 <td style={{ padding: '14px' }}>
-                  <span className="badge badge-green">Received</span>
+                  <span style={{
+                    backgroundColor: '#E8F9F2',
+                    color: '#0D9665',
+                    border: '1px solid rgba(18,168,107,0.3)',
+                    padding: '3px 10px',
+                    borderRadius: '9999px',
+                    fontSize: '11px',
+                    fontWeight: 700
+                  }}>
+                    Received
+                  </span>
                 </td>
               </tr>
             ))}
@@ -374,7 +468,7 @@ export const DonorsCampaignsPage: React.FC = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backgroundColor: 'rgba(11, 59, 112, 0.6)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -382,21 +476,21 @@ export const DonorsCampaignsPage: React.FC = () => {
         }}>
           <div style={{
             backgroundColor: '#ffffff',
-            borderRadius: '12px',
+            borderRadius: '16px',
             width: '480px',
             padding: '28px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 20px 30px rgba(11, 59, 112, 0.2)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>Record New Donation</h3>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none' }}>
-                <X size={20} color="#64748b" />
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#102B5C', margin: 0 }}>Record New Donation</h3>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <X size={20} color="#526784" />
               </button>
             </div>
 
             <form onSubmit={handleCreateDonation}>
               <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#102B5C', marginBottom: '6px' }}>
                   Donor / Organization Name *
                 </label>
                 <input
@@ -405,12 +499,13 @@ export const DonorsCampaignsPage: React.FC = () => {
                   value={donorName}
                   onChange={(e) => setDonorName(e.target.value)}
                   placeholder="e.g. Red Cross Colombo / C. Wickramasinghe"
+                  style={{ borderColor: '#D5E4F3' }}
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#102B5C', marginBottom: '6px' }}>
                     Amount (LKR) *
                   </label>
                   <input
@@ -418,25 +513,27 @@ export const DonorsCampaignsPage: React.FC = () => {
                     required
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
+                    style={{ borderColor: '#D5E4F3' }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#102B5C', marginBottom: '6px' }}>
                     In-Kind Items (units)
                   </label>
                   <input
                     type="number"
                     value={itemCount}
                     onChange={(e) => setItemCount(e.target.value)}
+                    style={{ borderColor: '#D5E4F3' }}
                   />
                 </div>
               </div>
 
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#102B5C', marginBottom: '6px' }}>
                   Priority / Triage Flag
                 </label>
-                <select value={flag} onChange={(e) => setFlag(e.target.value)}>
+                <select value={flag} onChange={(e) => setFlag(e.target.value)} style={{ borderColor: '#D5E4F3', color: '#102B5C' }}>
                   <option value="-">Normal (-)</option>
                   <option value="Urgent">Urgent Priority</option>
                   <option value="Disposal">Flag for Waste Inspection</option>
@@ -448,10 +545,13 @@ export const DonorsCampaignsPage: React.FC = () => {
                   type="button"
                   onClick={() => setShowModal(false)}
                   style={{
-                    backgroundColor: '#f1f5f9',
-                    color: '#475569',
+                    backgroundColor: '#EDF6FF',
+                    color: '#526784',
                     padding: '10px 18px',
-                    borderRadius: '8px'
+                    borderRadius: '10px',
+                    border: '1px solid #D5E4F3',
+                    fontWeight: 600,
+                    cursor: 'pointer'
                   }}
                 >
                   Cancel
@@ -459,14 +559,17 @@ export const DonorsCampaignsPage: React.FC = () => {
                 <button
                   type="submit"
                   style={{
-                    backgroundColor: '#1d4ed8',
+                    backgroundColor: '#12A86B',
                     color: '#ffffff',
                     padding: '10px 20px',
-                    borderRadius: '8px',
-                    fontWeight: 700
+                    borderRadius: '10px',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 10px rgba(18, 168, 107, 0.25)'
                   }}
                 >
-                  Save & Dispatch Observer
+                  Save &amp; Dispatch Observer
                 </button>
               </div>
             </form>

@@ -30,6 +30,7 @@ import {
   Send,
   CalendarCheck
 } from 'lucide-react';
+import { BrowserStyleTabs, TabItem } from '../components/BrowserStyleTabs';
 
 interface DashboardProps {
   currentUserEmail?: string;
@@ -395,171 +396,29 @@ export const DonationAndVolunteerOfficerDashboardContent: React.FC<DashboardProp
         </div>
       )}
 
-      {/* Top Header & Role Identification */}
-      <div style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <span style={{
-            backgroundColor: '#eff6ff',
-            color: '#1d4ed8',
-            padding: '4px 12px',
-            borderRadius: '9999px',
-            fontSize: '12px',
-            fontWeight: 700,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}>
-            <Heart size={14} /> Donation and Volunteering
-          </span>
-          <span style={{
-            backgroundColor: '#ecfdf5',
-            color: '#059669',
-            padding: '4px 12px',
-            borderRadius: '9999px',
-            fontSize: '12px',
-            fontWeight: 700,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}>
-            <ShieldCheck size={14} /> Personal Aid & Volunteering Portal
-          </span>
-        </div>
-        <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
-          Donation and Volunteering Dashboard
-        </h1>
-        <p style={{ fontSize: '14px', color: '#64748b', marginTop: '4px' }}>
-          Welcome back, <strong>{userName}</strong> ({userEmail}). Manage your personal monetary and goods aid contributions, register as a volunteer, and track your request statuses.
-        </p>
-      </div>
-
-      {/* Main Tab Navigation */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        borderBottom: '1px solid #e2e8f0',
-        paddingBottom: '8px',
-        marginBottom: '24px',
-        flexWrap: 'wrap'
-      }}>
-        <button
-          onClick={() => setActiveTab('monetary')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '8px',
-            backgroundColor: activeTab === 'monetary' ? '#1d4ed8' : '#ffffff',
-            color: activeTab === 'monetary' ? '#ffffff' : '#475569',
-            fontSize: '13px',
-            fontWeight: 700,
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <DollarSign size={16} /> Monetary Donations
-        </button>
-
-        <button
-          onClick={() => setActiveTab('goods')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '8px',
-            backgroundColor: activeTab === 'goods' ? '#1d4ed8' : '#ffffff',
-            color: activeTab === 'goods' ? '#ffffff' : '#475569',
-            fontSize: '13px',
-            fontWeight: 700,
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <Package size={16} /> Goods Donations
-        </button>
-
-        <button
-          onClick={() => setActiveTab('volunteer')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '8px',
-            backgroundColor: activeTab === 'volunteer' ? '#1d4ed8' : '#ffffff',
-            color: activeTab === 'volunteer' ? '#ffffff' : '#475569',
-            fontSize: '13px',
-            fontWeight: 700,
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <UserPlus size={16} /> Volunteer Registration
-        </button>
-
-        <button
-          onClick={() => setActiveTab('my-donations')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '8px',
-            backgroundColor: activeTab === 'my-donations' ? '#1d4ed8' : '#ffffff',
-            color: activeTab === 'my-donations' ? '#ffffff' : '#475569',
-            fontSize: '13px',
-            fontWeight: 700,
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <Clock size={16} /> My Donation Requests ({monetaryDonations.length + goodsDonations.length})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('my-volunteers')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '8px',
-            backgroundColor: activeTab === 'my-volunteers' ? '#1d4ed8' : '#ffffff',
-            color: activeTab === 'my-volunteers' ? '#ffffff' : '#475569',
-            fontSize: '13px',
-            fontWeight: 700,
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <Calendar size={16} /> My Volunteer Requests ({volunteerRegistrations.length})
-        </button>
-
-        <button
-          onClick={() => setActiveTab('notifications')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '8px',
-            backgroundColor: activeTab === 'notifications' ? '#1d4ed8' : '#ffffff',
-            color: activeTab === 'notifications' ? '#ffffff' : '#475569',
-            fontSize: '13px',
-            fontWeight: 700,
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          <Bell size={16} /> Request Status & Notifications ({notifications.length})
-        </button>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* TAB 1: MONETARY DONATION FORM */}
-      {/* ========================================================================= */}
-      {activeTab === 'monetary' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '24px' }}>
-          <div className="card" style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <DollarSign size={20} color="#2563eb" /> Online Monetary Donation Form
-            </h2>
+      {/* Main Tab Navigation with Connected Content */}
+      <BrowserStyleTabs<'monetary' | 'goods' | 'volunteer' | 'my-donations' | 'my-volunteers' | 'notifications'>
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        ariaLabel="Donation & Volunteering Tabs"
+        tabs={[
+          { id: 'monetary', label: 'Monetary Donations', icon: DollarSign },
+          { id: 'goods', label: 'Goods Donations', icon: Package },
+          { id: 'volunteer', label: 'Volunteer Registration', icon: UserPlus },
+          { id: 'my-donations', label: 'My Donation Requests', count: monetaryDonations.length + goodsDonations.length, icon: Clock },
+          { id: 'my-volunteers', label: 'My Volunteer Requests', count: volunteerRegistrations.length, icon: Calendar },
+          { id: 'notifications', label: 'Request Status & Notifications', count: notifications.length, icon: Bell }
+        ]}
+      >
+        {/* ========================================================================= */}
+        {/* TAB 1: MONETARY DONATION FORM */}
+        {/* ========================================================================= */}
+        {activeTab === 'monetary' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '24px' }}>
+            <div style={{ padding: '0' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <DollarSign size={20} color="#2563eb" /> Online Monetary Donation Form
+              </h2>
 
             <form onSubmit={handleMonetarySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -1680,6 +1539,7 @@ export const DonationAndVolunteerOfficerDashboardContent: React.FC<DashboardProp
           </div>
         </div>
       )}
+      </BrowserStyleTabs>
 
       {/* ========================================================================= */}
       {/* HANDOVER DATE RANGE SELECTION MODAL */}

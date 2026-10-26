@@ -26,8 +26,10 @@ import {
   ChevronDown,
   ChevronUp,
   FileCheck,
-  CalendarCheck
+  CalendarCheck,
+  HeartHandshake
 } from 'lucide-react';
+import { BrowserStyleTabs } from '../components/BrowserStyleTabs';
 
 export const VolunteerAndDonationCoordinatorDashboardContent: React.FC = () => {
   const [activeSection, setActiveSection] = useState<
@@ -319,89 +321,26 @@ export const VolunteerAndDonationCoordinatorDashboardContent: React.FC = () => {
         </div>
       )}
 
-      {/* Header Banner */}
-      <div style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <span style={{
-            backgroundColor: '#eff6ff',
-            color: '#1d4ed8',
-            padding: '4px 12px',
-            borderRadius: '9999px',
-            fontSize: '12px',
-            fontWeight: 700,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}>
-            <ShieldCheck size={14} /> Volunteer and Donation Coordinator
-          </span>
-          <span style={{
-            backgroundColor: '#fef3c7',
-            color: '#b45309',
-            padding: '4px 12px',
-            borderRadius: '9999px',
-            fontSize: '12px',
-            fontWeight: 700
-          }}>
-            {pendingMonetary + pendingGoods + pendingVols} Pending Action Items
-          </span>
-        </div>
-        <h1 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
-          Volunteer and Donation Coordinator Dashboard
-        </h1>
-        <p style={{ fontSize: '14px', color: '#64748b', marginTop: '4px' }}>
-          Comprehensive operational governance for reviewing donation requests, verifying bank payments, scheduling physical goods handovers, and managing volunteer rosters.
-        </p>
-      </div>
-
-      {/* Section Navigation Pills */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        borderBottom: '1px solid #e2e8f0',
-        paddingBottom: '8px',
-        marginBottom: '24px',
-        overflowX: 'auto',
-        flexWrap: 'wrap'
-      }}>
-        {[
-          { id: 'overview', label: '1. Dashboard Overview', icon: BarChart3 },
-          { id: 'all-requests', label: '2. Donation Requests', icon: Clock },
-          { id: 'monetary', label: `3. Monetary (${pendingMonetary})`, icon: DollarSign },
-          { id: 'goods', label: `4. Goods (${pendingGoods})`, icon: Package },
-          { id: 'volunteer-apps', label: `5. Vol. Apps (${pendingVols})`, icon: Users },
-          { id: 'volunteer-roster', label: '6. Vol. Management', icon: Users },
-          { id: 'scheduling', label: '7. Vol. Scheduling', icon: Calendar },
-          { id: 'handovers', label: `8. Handovers (${confirmedHandovers})`, icon: CalendarCheck },
-          { id: 'notifications', label: `9. Notifications (${notifications.length})`, icon: Bell },
-          { id: 'reports', label: '10. Reports / Summary', icon: BarChart3 }
-        ].map(tab => {
-          const Icon = tab.icon;
-          const isSelected = activeSection === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSection(tab.id as any)}
-              style={{
-                padding: '9px 14px',
-                borderRadius: '8px',
-                backgroundColor: isSelected ? '#1d4ed8' : '#ffffff',
-                color: isSelected ? '#ffffff' : '#475569',
-                fontSize: '12px',
-                fontWeight: 700,
-                border: '1px solid #e2e8f0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              <Icon size={14} />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      {/* 10 Chrome-Style Connected Tabs */}
+      <BrowserStyleTabs<
+        'overview' | 'all-requests' | 'monetary' | 'goods' | 'volunteer-apps' | 'volunteer-roster' | 'scheduling' | 'handovers' | 'notifications' | 'reports'
+      >
+        activeTab={activeSection}
+        onTabChange={setActiveSection}
+        ariaLabel="Volunteer and Donation Coordinator Tabs"
+        tabs={[
+          { id: 'overview', label: 'Dashboard Overview', icon: BarChart3 },
+          { id: 'all-requests', label: 'Donation Requests', icon: Clock },
+          { id: 'monetary', label: 'Monetary', count: pendingMonetary, icon: DollarSign },
+          { id: 'goods', label: 'Donation Management', count: pendingGoods, icon: Package },
+          { id: 'volunteer-apps', label: 'Volunteers Management', count: pendingVols, icon: Users },
+          { id: 'volunteer-roster', label: 'Volunteer Summary', icon: HeartHandshake },
+          { id: 'scheduling', label: 'Volunteer Scheduling', icon: Calendar },
+          { id: 'handovers', label: 'Handovers', count: confirmedHandovers, icon: CalendarCheck },
+          { id: 'notifications', label: 'Notifications', count: notifications.length, icon: Bell },
+          { id: 'reports', label: 'Reports / Summary', icon: BarChart3 }
+        ]}
+      >
 
       {/* ========================================================================= */}
       {/* 1. DASHBOARD OVERVIEW */}
@@ -1078,6 +1017,7 @@ export const VolunteerAndDonationCoordinatorDashboardContent: React.FC = () => {
           </div>
         </div>
       )}
+      </BrowserStyleTabs>
 
       {/* ========================================================================= */}
       {/* MODAL: APPROVE GOODS DONATION & SET HANDOVER WINDOW */}

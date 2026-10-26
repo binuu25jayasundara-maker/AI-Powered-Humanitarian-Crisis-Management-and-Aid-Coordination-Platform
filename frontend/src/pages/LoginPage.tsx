@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Check, AlertTriangle, Shield, Globe } from 'lucide-react';
+import { Check, AlertTriangle, Shield } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -15,45 +15,25 @@ export const LoginPage: React.FC = () => {
 
   const getDashboardPath = (userRole?: string): string => {
     switch (userRole) {
-      case 'Citizen':
-        return '/dashboard/citizen';
-      case 'SystemAdmin':
-        return '/dashboard/admin';
-      case 'EmergencyCoordinator':
-        return '/dashboard/emergency-coordinator';
-      case 'CaseManager':
-        return '/dashboard/case-manager';
-      case 'VolunteerCoordinator':
-        return '/dashboard/volunteer-coordinator';
-      case 'DonorOfficer':
-        return '/dashboard/donor-officer';
-      default:
-        return '/dashboard/citizen';
+      case 'Citizen': return '/dashboard/citizen';
+      case 'SystemAdmin': return '/dashboard/admin';
+      case 'EmergencyCoordinator': return '/dashboard/emergency-coordinator';
+      case 'CaseManager': return '/dashboard/case-manager';
+      case 'VolunteerCoordinator': return '/dashboard/volunteer-coordinator';
+      case 'DonorOfficer': return '/dashboard/donor-officer';
+      default: return '/dashboard/citizen';
     }
   };
 
   const handleRoleChange = (newRole: string) => {
     setRole(newRole);
-    // Auto-fill demo account based on role selection for instant ease of testing!
     switch (newRole) {
-      case 'SystemAdmin':
-        setEmail('admin@resqnet.org');
-        break;
-      case 'EmergencyCoordinator':
-        setEmail('coordinator@resqnet.org');
-        break;
-      case 'CaseManager':
-        setEmail('casemanager@resqnet.org');
-        break;
-      case 'VolunteerCoordinator':
-        setEmail('volunteer.coord@resqnet.org');
-        break;
-      case 'DonorOfficer':
-        setEmail('donor.officer@resqnet.org');
-        break;
-      default:
-        setEmail('citizen@resqnet.org');
-        break;
+      case 'SystemAdmin': setEmail('admin@resqnet.org'); break;
+      case 'EmergencyCoordinator': setEmail('coordinator@resqnet.org'); break;
+      case 'CaseManager': setEmail('casemanager@resqnet.org'); break;
+      case 'VolunteerCoordinator': setEmail('volunteer.coord@resqnet.org'); break;
+      case 'DonorOfficer': setEmail('donor.officer@resqnet.org'); break;
+      default: setEmail('citizen@resqnet.org'); break;
     }
   };
 
@@ -61,7 +41,6 @@ export const LoginPage: React.FC = () => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
     try {
       const authUser = await login(email, password, role);
       const targetRole = authUser?.role || role;
@@ -76,132 +55,124 @@ export const LoginPage: React.FC = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#0a192f',
+      backgroundColor: '#0B3B70',
       display: 'flex',
       flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
       padding: '24px'
     }}>
-      {/* Top Banner Matching Screenshot */}
+      {/* Top Label Banner */}
       <div style={{
-        maxWidth: '920px',
         width: '100%',
-        margin: '0 auto 16px',
+        maxWidth: '900px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        color: '#ffffff'
+        color: '#FFFFFF',
+        marginBottom: '16px'
       }}>
-        <div style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '0.02em' }}>
-          1 · Login / Register
-        </div>
+        <div style={{ fontSize: '14px', fontWeight: 700 }}>1 · Login / Register</div>
         <div style={{
-          backgroundColor: '#334155',
-          color: '#cbd5e1',
-          fontSize: '11px',
+          backgroundColor: 'rgba(255,255,255,0.15)',
+          color: '#FFFFFF',
+          fontSize: '10px',
           fontWeight: 800,
           padding: '4px 14px',
-          borderRadius: 'var(--radius-full)',
-          letterSpacing: '0.05em'
+          borderRadius: '999px',
+          letterSpacing: '0.08em'
         }}>
           PUBLIC
         </div>
       </div>
 
-      {/* Main Split Authentication Card Matching Screenshot */}
+      {/* Main Card */}
       <div style={{
-        maxWidth: '920px',
         width: '100%',
-        margin: '0 auto',
-        backgroundColor: '#ffffff',
+        maxWidth: '900px',
+        backgroundColor: '#FFFFFF',
         borderRadius: '20px',
         overflow: 'hidden',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.45)',
+        boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.4)',
         display: 'grid',
-        gridTemplateColumns: '1fr 1.15fr',
-        minHeight: '520px'
+        gridTemplateColumns: '1fr 1.2fr',
+        minHeight: '510px'
       }}>
-        {/* Left Side: Deep Blue Brand Panel */}
+        {/* Left — Brand Panel */}
         <div style={{
-          background: 'linear-gradient(145deg, #1d4ed8 0%, #1e3a8a 100%)',
-          color: '#ffffff',
+          background: 'linear-gradient(145deg, #0B477F 0%, #0B3B70 100%)',
+          color: '#FFFFFF',
           padding: '48px 40px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center'
         }}>
-          <h1 style={{
-            fontSize: '34px',
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
-            margin: '0 0 10px',
-            color: '#ffffff'
-          }}>
-            ResQnet.AI
-          </h1>
-          <p style={{
-            fontSize: '13px',
-            color: '#bfdbfe',
-            lineHeight: 1.5,
-            margin: '0 0 36px',
-            fontWeight: 500
-          }}>
-            AI Powered Crisis Management & Aid Coordination Platform
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+            <div style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '12px',
+              background: 'rgba(255,255,255,0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Shield size={22} color="#FFFFFF" />
+            </div>
+            <h1 style={{ fontSize: '30px', fontWeight: 800, letterSpacing: '-0.02em', margin: 0, color: '#FFFFFF' }}>
+              ResQnest<span style={{ color: '#12A86B' }}>.AI</span>
+            </h1>
+          </div>
+          <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 36px', fontWeight: 500 }}>
+            AI Powered Crisis Management &amp; Aid Coordination Platform
           </p>
-
-          {/* Bullet points with checkmarks */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', fontWeight: 600 }}>
-              <Check size={16} color="#60a5fa" strokeWidth={3} />
-              <span>Request help in one tap</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', fontWeight: 600 }}>
-              <Check size={16} color="#60a5fa" strokeWidth={3} />
-              <span>Verified shelters & alerts</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', fontWeight: 600 }}>
-              <Check size={16} color="#60a5fa" strokeWidth={3} />
-              <span>Multilingual AI assistant</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', fontWeight: 600 }}>
-              <Check size={16} color="#60a5fa" strokeWidth={3} />
-              <span>Human-reviewed decisions</span>
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[
+              'Request help in one tap',
+              'Verified shelters & alerts',
+              'Multilingual AI assistant',
+              'Human-reviewed decisions'
+            ].map((text) => (
+              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '13px', fontWeight: 600 }}>
+                <div style={{
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  background: 'rgba(18, 168, 107, 0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Check size={13} color="#12A86B" strokeWidth={3} />
+                </div>
+                <span style={{ color: 'rgba(255,255,255,0.85)' }}>{text}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Right Side: Sign In Form */}
+        {/* Right — Sign In Form */}
         <div style={{
-          padding: '40px 44px',
+          padding: '44px 48px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          backgroundColor: '#ffffff'
+          backgroundColor: '#FFFFFF'
         }}>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: 800,
-            color: '#0f172a',
-            margin: '0 0 18px',
-            letterSpacing: '-0.01em'
-          }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#102B5C', margin: '0 0 20px', letterSpacing: '-0.01em' }}>
             Sign in
           </h2>
 
-          {/* Tab Pill Switcher */}
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: '24px',
-            borderBottom: '1px solid #f1f5f9',
-            paddingBottom: '12px'
-          }}>
+          {/* Tab Switcher */}
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '26px', paddingBottom: '14px', borderBottom: '1px solid #EDF6FF' }}>
             <button
               type="button"
               style={{
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
-                padding: '6px 20px',
-                borderRadius: 'var(--radius-full)',
+                backgroundColor: '#0866C6',
+                color: '#FFFFFF',
+                padding: '7px 22px',
+                borderRadius: '999px',
                 fontSize: '12px',
                 fontWeight: 700
               }}
@@ -213,9 +184,9 @@ export const LoginPage: React.FC = () => {
               onClick={() => navigate('/register')}
               style={{
                 backgroundColor: 'transparent',
-                color: '#64748b',
-                padding: '6px 20px',
-                borderRadius: 'var(--radius-full)',
+                color: '#526784',
+                padding: '7px 22px',
+                borderRadius: '999px',
                 fontSize: '12px',
                 fontWeight: 600
               }}
@@ -226,12 +197,12 @@ export const LoginPage: React.FC = () => {
 
           {error && (
             <div style={{
-              backgroundColor: '#fef2f2',
-              color: '#b91c1c',
-              border: '1px solid #fecaca',
+              backgroundColor: '#FFF0F1',
+              color: '#DC3545',
+              border: '1px solid rgba(220,53,69,0.25)',
               padding: '10px 14px',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '12px',
+              borderRadius: '10px',
+              fontSize: '13px',
               marginBottom: '16px'
             }}>
               {error}
@@ -239,71 +210,66 @@ export const LoginPage: React.FC = () => {
           )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div>
-              <input
-                type="email"
-                required
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ padding: '11px 14px', fontSize: '13px' }}
-              />
-            </div>
-
-            <div>
-              <input
-                type="password"
-                required
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{ padding: '11px 14px', fontSize: '13px' }}
-              />
-            </div>
-
-            <div>
-              <select
-                value={role}
-                onChange={(e) => handleRoleChange(e.target.value)}
-                style={{ padding: '11px 14px', fontSize: '13px', color: '#334155' }}
-              >
-                <option value="Citizen">Role: Citizen</option>
-                <option value="SystemAdmin">Role: System Administrator</option>
-                <option value="EmergencyCoordinator">Role: Emergency Coordinator</option>
-                <option value="CaseManager">Role: Incident / Case Manager</option>
-                <option value="VolunteerCoordinator">Role: Volunteer and Donation Coordinator</option>
-                <option value="DonorOfficer">Role: Donation and Volunteering</option>
-              </select>
-            </div>
+            <input
+              type="email"
+              required
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ padding: '11px 14px', fontSize: '13px', borderColor: '#D5E4F3' }}
+            />
+            <input
+              type="password"
+              required
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ padding: '11px 14px', fontSize: '13px', borderColor: '#D5E4F3' }}
+            />
+            <select
+              value={role}
+              onChange={(e) => handleRoleChange(e.target.value)}
+              style={{ padding: '11px 14px', fontSize: '13px', color: '#102B5C', borderColor: '#D5E4F3' }}
+            >
+              <option value="Citizen">Role: Citizen</option>
+              <option value="SystemAdmin">Role: System Administrator</option>
+              <option value="EmergencyCoordinator">Role: Emergency Coordinator</option>
+              <option value="CaseManager">Role: Incident / Case Manager</option>
+              <option value="VolunteerCoordinator">Role: Volunteer and Donation Coordinator</option>
+              <option value="DonorOfficer">Role: Donation and Volunteering</option>
+            </select>
 
             <button
               type="submit"
               disabled={loading}
               style={{
-                backgroundColor: '#2563eb',
-                color: '#ffffff',
-                padding: '12px',
+                backgroundColor: '#0866C6',
+                color: '#FFFFFF',
+                padding: '13px',
                 fontSize: '14px',
                 fontWeight: 700,
-                borderRadius: 'var(--radius-md)',
-                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)',
-                marginTop: '6px'
+                borderRadius: '10px',
+                boxShadow: '0 4px 14px rgba(8, 102, 198, 0.25)',
+                marginTop: '4px'
               }}
             >
               {loading ? 'Authenticating...' : 'Sign in'}
             </button>
           </form>
 
-          {/* Links Row */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             fontSize: '12px',
-            color: '#64748b',
-            margin: '18px 0 24px'
+            color: '#526784',
+            margin: '16px 0 22px'
           }}>
-            <a href="#forgot" onClick={(e) => { e.preventDefault(); alert('Please contact system administrator (admin@resqnet.org) to reset credentials.'); }}>
+            <a
+              href="#forgot"
+              style={{ color: '#0866C6' }}
+              onClick={(e) => { e.preventDefault(); alert('Please contact system administrator (admin@resqnet.org) to reset credentials.'); }}
+            >
               Forgot password?
             </a>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
@@ -311,13 +277,13 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Emergency SOS Button (Red with Triangle Warning Icon) */}
+          {/* Emergency SOS */}
           <button
             type="button"
             onClick={() => navigate('/emergency-help')}
             style={{
-              backgroundColor: '#dc2626',
-              color: '#ffffff',
+              backgroundColor: '#DC3545',
+              color: '#FFFFFF',
               padding: '13px',
               fontSize: '13px',
               fontWeight: 800,
@@ -325,8 +291,8 @@ export const LoginPage: React.FC = () => {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              borderRadius: 'var(--radius-md)',
-              boxShadow: '0 4px 14px rgba(220, 38, 38, 0.3)'
+              borderRadius: '10px',
+              boxShadow: '0 4px 14px rgba(220, 53, 69, 0.28)'
             }}
           >
             <AlertTriangle size={16} />
