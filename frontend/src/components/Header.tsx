@@ -37,13 +37,13 @@ const getRoleHeaderInfo = (role?: string) => {
     case 'VolunteerCoordinator':
       return {
         title: 'ResQnet.AI Volunteer & Donation Coordination',
-        tagline: 'VOLUNTEER ROSTER · MOBILIZATION · DEPLOYMENT',
+        tagline: 'VOLUNTEER ROSTER · DONATION MANAGEMENT · SCHEDULING & DEPLOYMENT',
         badge: 'VOLUNTEER AND DONATION COORDINATOR'
       };
     case 'DonorOfficer':
       return {
         title: 'ResQnet.AI Donation & Volunteering',
-        tagline: 'DONOR ENGAGEMENT · CAMPAIGN AID · CONTRIBUTIONS',
+        tagline: 'DONATION INTAKE · VOLUNTEER REGISTRATION · AID CONTRIBUTIONS',
         badge: 'DONATION AND VOLUNTEERING'
       };
     default:

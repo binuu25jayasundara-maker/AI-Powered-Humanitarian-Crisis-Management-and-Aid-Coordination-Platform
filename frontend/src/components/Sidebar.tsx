@@ -12,7 +12,9 @@ import {
   DollarSign,
   Radio,
   ClipboardList,
-  User as UserIcon
+  User as UserIcon,
+  MessageSquare,
+  Gift
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -28,7 +30,21 @@ export const Sidebar: React.FC = () => {
           { name: 'Roles & Permissions', path: '/admin/roles', icon: Key },
           { name: 'Organizations', path: '/admin/organizations', icon: Building2 },
           { name: 'Audit Log Viewer', path: '/admin/audit', icon: FileText },
+          { name: 'Volunteer Management', path: '/volunteers', icon: HeartHandshake },
+          { name: 'Communication Center', path: '/communications', icon: MessageSquare },
           { name: 'Public Emergency Help', path: '/emergency-help', icon: AlertTriangle }
+        ];
+      case 'DonorOfficer':
+        return [
+          { name: 'Donation and Volunteering Dashboard', path: '/dashboard/donor-officer', icon: DollarSign },
+          { name: 'Emergency Help Hub', path: '/emergency-help', icon: AlertTriangle }
+        ];
+      case 'VolunteerCoordinator':
+        return [
+          { name: 'Volunteer & Donation Coordinator Dashboard', path: '/dashboard/volunteer-coordinator', icon: HeartHandshake },
+          { name: 'Volunteer Roster & Tasks', path: '/volunteers', icon: Users },
+          { name: 'Communication Center', path: '/communications', icon: MessageSquare },
+          { name: 'Emergency Help Hub', path: '/emergency-help', icon: AlertTriangle }
         ];
       case 'EmergencyCoordinator':
         return [
@@ -39,16 +55,6 @@ export const Sidebar: React.FC = () => {
         return [
           { name: 'Case Manager Dashboard', path: '/dashboard/case-manager', icon: ClipboardList },
           { name: 'Emergency Distress Queue', path: '/emergency-help', icon: AlertTriangle }
-        ];
-      case 'VolunteerCoordinator':
-        return [
-          { name: 'Volunteer and Donation Coordinator Dashboard', path: '/dashboard/volunteer-coordinator', icon: HeartHandshake },
-          { name: 'Emergency Help Hub', path: '/emergency-help', icon: AlertTriangle }
-        ];
-      case 'DonorOfficer':
-        return [
-          { name: 'Donation and Volunteering Dashboard', path: '/dashboard/donor-officer', icon: DollarSign },
-          { name: 'Emergency Help Hub', path: '/emergency-help', icon: AlertTriangle }
         ];
       case 'Citizen':
       default:
@@ -118,7 +124,7 @@ export const Sidebar: React.FC = () => {
           <ShieldCheck size={16} color="#10b981" /> RBAC Policy Active
         </div>
         <p style={{ fontSize: '11px', color: '#64748b', margin: '4px 0 0' }}>
-          Zero-trust JWT validation with role-based routing.
+          Unified Member 1 + Member 6 Platform.
         </p>
       </div>
     </aside>
