@@ -10,13 +10,18 @@ import { OrganizationsPage } from './pages/OrganizationsPage';
 import { AuditLogsPage } from './pages/AuditLogsPage';
 import { EmergencyHelpPage } from './pages/EmergencyHelpPage';
 
-// Six Separate Role-Based Dashboards
+// Six Separate Role-Based Dashboards (Preserved from Phase 1)
 import { CitizenDashboardPage } from './pages/CitizenDashboardPage';
 import { SystemAdminDashboardPage } from './pages/SystemAdminDashboardPage';
 import { EmergencyCoordinatorDashboardPage } from './pages/EmergencyCoordinatorDashboardPage';
 import { CaseManagerDashboardPage } from './pages/CaseManagerDashboardPage';
 import { VolunteerCoordinatorDashboardPage } from './pages/VolunteerCoordinatorDashboardPage';
 import { DonorOfficerDashboardPage } from './pages/DonorOfficerDashboardPage';
+
+// Member 6 Integrated Modules
+import { DonorsCampaignsPage } from './pages/DonorsCampaignsPage';
+import { VolunteerManagementPage } from './pages/VolunteerManagementPage';
+import { CommunicationCenterPage } from './pages/CommunicationCenterPage';
 
 const RoleBasedRedirect: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -51,7 +56,7 @@ export const App: React.FC = () => {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/emergency-help" element={<EmergencyHelpPage />} />
 
-          {/* Role-Specific Dashboard Routes */}
+          {/* Six Separate Role Dashboard Landing Routes */}
           <Route element={<ProtectedRoute allowedRoles={['Citizen', 'SystemAdmin']} />}>
             <Route path="/dashboard/citizen" element={<CitizenDashboardPage />} />
           </Route>
@@ -79,6 +84,16 @@ export const App: React.FC = () => {
 
           <Route element={<ProtectedRoute allowedRoles={['DonorOfficer', 'SystemAdmin']} />}>
             <Route path="/dashboard/donor-officer" element={<DonorOfficerDashboardPage />} />
+          </Route>
+
+          {/* Member 6 Integrated Modules */}
+          <Route element={<ProtectedRoute allowedRoles={['DonorOfficer', 'SystemAdmin']} />}>
+            <Route path="/campaigns" element={<DonorsCampaignsPage />} />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={['VolunteerCoordinator', 'SystemAdmin']} />}>
+            <Route path="/volunteers" element={<VolunteerManagementPage />} />
+            <Route path="/communications" element={<CommunicationCenterPage />} />
           </Route>
 
           {/* Root and Dashboard Redirects */}
