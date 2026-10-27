@@ -12,44 +12,44 @@ const getRoleHeaderInfo = (role?: string) => {
   switch (role) {
     case 'Citizen':
       return {
-        title: 'ResQnet.AI Citizen Portal',
+        title: 'ResQnest.AI Citizen Portal',
         tagline: 'PUBLIC CRISIS SUPPORT · RELIEF TRACKING · AID DISPATCH',
         badge: 'CITIZEN'
       };
     case 'SystemAdmin':
       return {
-        title: 'ResQnet.AI Administration',
+        title: 'ResQnest.AI Administration',
         tagline: 'SECURITY · RBAC · AUDIT TRAILS · MULTI-AGENCY GOVERNANCE',
         badge: 'SYSTEM ADMINISTRATOR'
       };
     case 'EmergencyCoordinator':
       return {
-        title: 'ResQnet.AI Emergency Operations',
+        title: 'ResQnest.AI Emergency Operations',
         tagline: 'DISASTER COORDINATION · COMMAND & CRISIS RESPONSE',
         badge: 'EMERGENCY COORDINATOR'
       };
     case 'CaseManager':
       return {
-        title: 'ResQnet.AI Incident & Case Management',
+        title: 'ResQnest.AI Incident & Case Management',
         tagline: 'CASE ASSESSMENT · TRIAGE · ASSISTANCE DISPATCH',
         badge: 'CASE MANAGER'
       };
     case 'VolunteerCoordinator':
       return {
-        title: 'ResQnet.AI Volunteer & Donation Coordination',
-        tagline: 'VOLUNTEER ROSTER · DONATION MANAGEMENT · SCHEDULING & DEPLOYMENT',
-        badge: 'VOLUNTEER AND DONATION COORDINATOR'
+        title: 'ResQnest.AI Volunteer & Donation Coordination',
+        tagline: 'VOLUNTEER ROSTER · MOBILIZATION · DEPLOYMENT',
+        badge: 'VOLUNTEER & DONATION COORDINATOR'
       };
     case 'DonorOfficer':
       return {
-        title: 'ResQnet.AI Donation & Volunteering',
-        tagline: 'DONATION INTAKE · VOLUNTEER REGISTRATION · AID CONTRIBUTIONS',
-        badge: 'DONATION AND VOLUNTEERING'
+        title: 'ResQnest.AI Donation & Volunteering',
+        tagline: 'DONOR ENGAGEMENT · CAMPAIGN AID · CONTRIBUTIONS',
+        badge: 'DONOR OFFICER'
       };
     default:
       return {
-        title: 'ResQnet.AI Administration',
-        tagline: 'SECURITY · RBAC · AUDIT TRAILS · MULTI-AGENCY GOVERNANCE',
+        title: 'ResQnest.AI',
+        tagline: 'AI Powered Crisis Management & Aid Coordination Platform',
         badge: 'PUBLIC'
       };
   }
@@ -69,83 +69,126 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header style={{
-      backgroundColor: 'var(--color-navy)',
-      color: '#ffffff',
-      padding: '16px 28px',
+      backgroundColor: '#0B477F',
+      color: '#FFFFFF',
+      height: '66px',
+      padding: '0 28px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      borderBottom: '1px solid #1e293b'
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
+      boxShadow: '0 2px 8px rgba(11, 59, 112, 0.25)'
     }}>
-      <div>
-        <h1 style={{ fontSize: '20px', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Shield size={22} color="#3b82f6" /> {displayTitle}
-        </h1>
-        <p style={{ fontSize: '11px', color: '#94a3b8', margin: '3px 0 0', letterSpacing: '0.05em', fontWeight: 600 }}>
-          {displayTagline}
-        </p>
+      {/* Left: Logo + Title */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{
+          width: '38px',
+          height: '38px',
+          borderRadius: '10px',
+          background: 'rgba(255,255,255,0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0
+        }}>
+          <Shield size={20} color="#FFFFFF" />
+        </div>
+        <div>
+          <h1 style={{
+            fontSize: '16px',
+            fontWeight: 800,
+            margin: 0,
+            color: '#FFFFFF',
+            letterSpacing: '-0.01em'
+          }}>
+            {displayTitle}
+          </h1>
+          <p style={{
+            fontSize: '10px',
+            color: 'rgba(255,255,255,0.65)',
+            margin: '2px 0 0',
+            letterSpacing: '0.05em',
+            fontWeight: 600
+          }}>
+            {displayTagline}
+          </p>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {/* System online indicator */}
+      {/* Right: Controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* System Online Indicator */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '6px',
           fontSize: '12px',
-          color: '#86efac',
+          color: 'rgba(255,255,255,0.9)',
           fontWeight: 600,
-          background: 'rgba(16, 185, 129, 0.1)',
-          padding: '6px 12px',
-          borderRadius: 'var(--radius-full)',
-          border: '1px solid rgba(16, 185, 129, 0.2)'
+          background: 'rgba(18, 168, 107, 0.18)',
+          padding: '5px 12px',
+          borderRadius: '999px',
+          border: '1px solid rgba(18, 168, 107, 0.35)'
         }}>
           <span style={{
-            width: '8px',
-            height: '8px',
-            backgroundColor: 'var(--color-green-success)',
+            width: '7px',
+            height: '7px',
+            backgroundColor: '#12A86B',
             borderRadius: '50%',
             display: 'inline-block',
-            boxShadow: '0 0 8px #10b981'
+            boxShadow: '0 0 6px #12A86B'
           }}></span>
           System online
         </div>
 
-        {/* Language selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#cbd5e1', cursor: 'pointer' }}>
-          <Globe size={14} />
+        {/* Language */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontSize: '12px',
+          color: 'rgba(255,255,255,0.75)',
+          cursor: 'pointer'
+        }}>
+          <Globe size={13} />
           <span>EN ▾</span>
         </div>
 
-        {/* Role Pill */}
+        {/* Role Badge */}
         <div style={{
-          backgroundColor: '#1e3a8a',
-          color: '#93c5fd',
-          fontSize: '11px',
+          backgroundColor: '#12A86B',
+          color: '#FFFFFF',
+          fontSize: '10px',
           fontWeight: 800,
-          padding: '6px 14px',
-          borderRadius: 'var(--radius-full)',
-          letterSpacing: '0.05em'
+          padding: '5px 13px',
+          borderRadius: '999px',
+          letterSpacing: '0.04em',
+          whiteSpace: 'nowrap'
         }}>
           {displayBadge}
         </div>
 
+        {/* Logout */}
         {user && (
           <button
             onClick={logout}
             title="Sign out"
             style={{
-              background: 'transparent',
-              color: '#94a3b8',
-              padding: '6px 10px',
+              background: 'rgba(255,255,255,0.12)',
+              color: 'rgba(255,255,255,0.85)',
+              padding: '6px 12px',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
               fontSize: '12px',
-              borderRadius: 'var(--radius-md)'
+              borderRadius: '8px',
+              border: '1px solid rgba(255,255,255,0.15)',
+              fontWeight: 600
             }}
           >
-            <LogOut size={16} /> Logout
+            <LogOut size={14} /> Logout
           </button>
         )}
       </div>

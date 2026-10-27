@@ -1,39 +1,76 @@
 :root {
-  --color-navy: #0f172a;
-  --color-navy-dark: #0a0f1d;
-  --color-navy-light: #1e293b;
-  --color-blue-brand: #1d4ed8;
-  --color-blue-primary: #2563eb;
-  --color-blue-hover: #1e40af;
-  --color-blue-soft: #eff6ff;
-  --color-red-danger: #dc2626;
+  /* === ResQnest.AI Official Colour Palette === */
+
+  /* Primary Colours */
+  --color-primary-dark: #0B3B70;
+  --color-header-blue: #0B477F;
+  --color-primary-blue: #0866C6;
+  --color-primary-green: #12A86B;
+  --color-secondary-green: #0D9665;
+
+  /* Background & Surface */
+  --color-bg-page: #EDF6FF;
+  --color-bg-card: #FFFFFF;
+  --color-bg-sidebar: #0B3B70;
+  --color-bg-header: #0B477F;
+
+  /* Borders */
+  --color-border: #D5E4F3;
+  --color-border-focus: #0866C6;
+
+  /* Text */
+  --color-text-main: #102B5C;
+  --color-text-muted: #526784;
+  --color-text-on-dark: #FFFFFF;
+  --color-text-sidebar-muted: rgba(255, 255, 255, 0.6);
+
+  /* Status / Alert Colours */
+  --color-warning: #FFB51B;
+  --color-warning-soft: #FFF8E6;
+  --color-error: #DC3545;
+  --color-error-soft: #FFF0F1;
+  --color-green-soft: #E8F9F2;
+  --color-blue-soft: #EDF6FF;
+
+  /* Legacy token aliases (kept for backward compat) */
+  --color-navy: var(--color-primary-dark);
+  --color-navy-dark: #082D56;
+  --color-navy-light: #0B477F;
+  --color-blue-brand: var(--color-primary-blue);
+  --color-blue-primary: var(--color-primary-blue);
+  --color-blue-hover: #0755A8;
+  --color-blue-soft: #EDF6FF;
+  --color-red-danger: var(--color-error);
   --color-red-hover: #b91c1c;
-  --color-red-soft: #fef2f2;
-  --color-amber-warning: #f59e0b;
-  --color-amber-dark: #d97706;
-  --color-amber-soft: #fffbeb;
-  --color-green-success: #10b981;
-  --color-green-dark: #059669;
-  --color-green-soft: #ecfdf5;
-  --color-teal: #0d9488;
-  --color-teal-soft: #f0fdfa;
-  
-  --color-bg-page: #f1f5f9;
-  --color-bg-card: #ffffff;
-  --color-text-main: #0f172a;
-  --color-text-muted: #64748b;
-  --color-border: #e2e8f0;
-  --color-border-focus: #3b82f6;
+  --color-red-soft: #FFF0F1;
+  --color-amber-warning: var(--color-warning);
+  --color-amber-dark: #e0930a;
+  --color-amber-soft: var(--color-warning-soft);
+  --color-green-success: var(--color-primary-green);
+  --color-green-dark: var(--color-secondary-green);
+  --color-teal: #0D9665;
+  --color-teal-soft: #E8F9F2;
+  --color-bg-page: #EDF6FF;
+  --color-text-muted: #526784;
+  --color-border: #D5E4F3;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
+  /* Shadows */
+  --shadow-sm: 0 1px 3px 0 rgba(11, 59, 112, 0.06);
+  --shadow-md: 0 4px 12px -1px rgba(11, 59, 112, 0.10), 0 2px 6px -2px rgba(11, 59, 112, 0.06);
+  --shadow-lg: 0 10px 20px -3px rgba(11, 59, 112, 0.12), 0 4px 8px -4px rgba(11, 59, 112, 0.07);
+  --shadow-xl: 0 20px 30px -5px rgba(11, 59, 112, 0.15), 0 8px 12px -6px rgba(11, 59, 112, 0.08);
 
+  /* Border Radius */
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-full: 9999px;
 
+  /* Typography */
   --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Sidebar */
+  --sidebar-width: 250px;
+  --header-height: 66px;
 }

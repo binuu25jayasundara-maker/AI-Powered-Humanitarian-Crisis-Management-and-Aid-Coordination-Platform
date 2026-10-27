@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   Users,
@@ -14,12 +14,15 @@ import {
   ClipboardList,
   User as UserIcon,
   MessageSquare,
-  Gift
+  BookOpen,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuth();
+  const [collapsed, setCollapsed] = useState(false);
 
   const getNavItemsForRole = (role?: string) => {
     switch (role) {
@@ -32,16 +35,17 @@ export const Sidebar: React.FC = () => {
           { name: 'Audit Log Viewer', path: '/admin/audit', icon: FileText },
           { name: 'Volunteer Management', path: '/volunteers', icon: HeartHandshake },
           { name: 'Communication Center', path: '/communications', icon: MessageSquare },
-          { name: 'Public Emergency Help', path: '/emergency-help', icon: AlertTriangle }
+          { name: 'Emergency Help', path: '/emergency-help', icon: AlertTriangle }
         ];
       case 'DonorOfficer':
         return [
-          { name: 'Donation and Volunteering Dashboard', path: '/dashboard/donor-officer', icon: DollarSign },
+          { name: 'Donation & Volunteering', path: '/dashboard/donor-officer', icon: DollarSign },
+          { name: 'Donors & Campaigns', path: '/campaigns', icon: BookOpen },
           { name: 'Emergency Help Hub', path: '/emergency-help', icon: AlertTriangle }
         ];
       case 'VolunteerCoordinator':
         return [
-          { name: 'Volunteer & Donation Coordinator Dashboard', path: '/dashboard/volunteer-coordinator', icon: HeartHandshake },
+          { name: 'Volunteer & Donation Coordinator', path: '/dashboard/volunteer-coordinator', icon: HeartHandshake },
           { name: 'Volunteer Roster & Tasks', path: '/volunteers', icon: Users },
           { name: 'Communication Center', path: '/communications', icon: MessageSquare },
           { name: 'Emergency Help Hub', path: '/emergency-help', icon: AlertTriangle }
@@ -69,64 +73,125 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside style={{
-      width: '240px',
-      backgroundColor: '#ffffff',
-      borderRight: '1px solid var(--color-border)',
-      minHeight: 'calc(100vh - 65px)',
-      padding: '24px 16px',
+      width: collapsed ? '64px' : '250px',
+      minWidth: collapsed ? '64px' : '250px',
+      backgroundColor: '#0B3B70',
+      minHeight: 'calc(100vh - 66px)',
+      padding: collapsed ? '20px 8px' : '20px 14px',
       display: 'flex',
       flexDirection: 'column',
-      gap: '8px'
+      gap: '4px',
+      transition: 'width 0.25s ease, min-width 0.25s ease',
+      position: 'relative',
+      zIndex: 10
     }}>
-      <div style={{ padding: '0 8px 16px', borderBottom: '1px solid #f1f5f9', marginBottom: '8px' }}>
-        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Logged In As
-        </div>
-        <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
-          {user?.fullName || 'Guest User'}
-        </div>
-        <div style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 600 }}>
-          {user?.role || 'Citizen'}
-        </div>
-      </div>
 
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      {/* Logo */}
+      {!collapsed && (
+        <div style={{ padding: '4px 8px 18px', borderBottom: '1px solid rgba(255,255,255,0.12)', marginBottom: '10px' }}>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+            ResQnest<span style={{ color: '#12A86B' }}>.AI</span>
+          </div>
+          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.55)', fontWeight: 500, marginTop: '3px' }}>
+            Unified Crisis Management Platform
+          </div>
+        </div>
+      )}
+      {collapsed && (
+        <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.12)', marginBottom: '10px' }}>
+          <span style={{ fontSize: '18px', fontWeight: 800, color: '#12A86B' }}>R</span>
+        </div>
+      )}
+
+      {/* User Info */}
+      {!collapsed && user && (
+        <div style={{ padding: '10px 10px 14px', borderBottom: '1px solid rgba(255,255,255,0.10)', marginBottom: '10px' }}>
+          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Logged In As
+          </div>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF', marginTop: '4px' }}>
+            {user?.fullName || 'Guest User'}
+          </div>
+          <div style={{
+            display: 'inline-block', marginTop: '4px', fontSize: '10px', fontWeight: 700,
+            color: '#12A86B', background: 'rgba(18,168,107,0.15)', padding: '2px 8px',
+            borderRadius: '999px', border: '1px solid rgba(18,168,107,0.3)'
+          }}>
+            {user?.role || 'Citizen'}
+          </div>
+        </div>
+      )}
+
+      {/* Navigation */}
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1 }}>
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
               key={item.path}
               to={item.path}
+              title={collapsed ? item.name : undefined}
               style={({ isActive }) => ({
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                padding: '12px 14px',
-                borderRadius: 'var(--radius-md)',
-                color: isActive ? '#1d4ed8' : '#475569',
-                backgroundColor: isActive ? '#eff6ff' : 'transparent',
+                gap: collapsed ? '0' : '11px',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                padding: collapsed ? '11px 0' : '10px 12px',
+                borderRadius: '10px',
+                color: isActive ? '#0866C6' : 'rgba(255,255,255,0.75)',
+                backgroundColor: isActive ? '#EDF6FF' : 'transparent',
                 fontWeight: isActive ? 700 : 500,
                 fontSize: '13px',
                 textDecoration: 'none',
-                borderLeft: isActive ? '4px solid #2563eb' : '4px solid transparent',
-                transition: 'all 0.15s ease'
+                transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden'
               })}
             >
-              <Icon size={18} />
-              <span>{item.name}</span>
+              {({ isActive }) => (
+                <>
+                  <Icon size={18} style={{ flexShrink: 0, color: isActive ? '#0866C6' : 'rgba(255,255,255,0.75)' }} />
+                  {!collapsed && <span>{item.name}</span>}
+                </>
+              )}
             </NavLink>
           );
         })}
       </nav>
 
-      <div style={{ marginTop: 'auto', padding: '16px 12px', background: '#f8fafc', borderRadius: 'var(--radius-md)', border: '1px solid #e2e8f0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0f172a', fontWeight: 700, fontSize: '12px' }}>
-          <ShieldCheck size={16} color="#10b981" /> RBAC Policy Active
+      {/* Bottom Status */}
+      {!collapsed && (
+        <div style={{
+          marginTop: 'auto',
+          padding: '12px',
+          background: 'rgba(255,255,255,0.08)',
+          borderRadius: '10px',
+          border: '1px solid rgba(255,255,255,0.12)',
+          marginBottom: '8px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#FFFFFF', fontWeight: 700, fontSize: '12px' }}>
+            <ShieldCheck size={15} color="#12A86B" /> RBAC Policy Active
+          </div>
+          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', margin: '4px 0 0', lineHeight: 1.4 }}>
+            Unified Member 1 + Member 6 Platform.
+          </p>
         </div>
-        <p style={{ fontSize: '11px', color: '#64748b', margin: '4px 0 0' }}>
-          Unified Member 1 + Member 6 Platform.
-        </p>
-      </div>
+      )}
+
+      {/* Collapse Toggle */}
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: '100%', padding: '8px',
+          background: 'rgba(255,255,255,0.08)', borderRadius: '8px',
+          color: 'rgba(255,255,255,0.6)', border: 'none', cursor: 'pointer',
+          fontSize: '12px', gap: '6px', transition: 'background 0.2s'
+        }}
+      >
+        {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /><span>Collapse</span></>}
+      </button>
     </aside>
   );
 };
