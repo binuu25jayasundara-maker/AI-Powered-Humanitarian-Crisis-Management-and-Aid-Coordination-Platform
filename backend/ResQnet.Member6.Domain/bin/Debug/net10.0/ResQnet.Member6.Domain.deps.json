@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "ResQnet.Member6.Domain/1.0.0": {
+        "runtime": {
+          "ResQnet.Member6.Domain.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ResQnet.Member6.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
