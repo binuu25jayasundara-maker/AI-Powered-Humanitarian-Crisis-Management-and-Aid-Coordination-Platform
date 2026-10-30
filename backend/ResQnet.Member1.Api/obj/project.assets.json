@@ -1832,23 +1832,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Binuthi Jayasundara\\.nuget\\packages\\": {},
+    "C:\\Users\\HP\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Binuthi Jayasundara\\Downloads\\Member 1\\Member 1\\backend\\ResQnet.Member1.Api\\ResQnet.Member1.Api.csproj",
+      "projectUniqueName": "C:\\Users\\HP\\Desktop\\For Anti\\Member 1 Member 6 Merge\\backend\\ResQnet.Member1.Api\\ResQnet.Member1.Api.csproj",
       "projectName": "ResQnet.Member1.Api",
-      "projectPath": "C:\\Users\\Binuthi Jayasundara\\Downloads\\Member 1\\Member 1\\backend\\ResQnet.Member1.Api\\ResQnet.Member1.Api.csproj",
-      "packagesPath": "C:\\Users\\Binuthi Jayasundara\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Binuthi Jayasundara\\Downloads\\Member 1\\Member 1\\backend\\ResQnet.Member1.Api\\obj\\",
+      "projectPath": "C:\\Users\\HP\\Desktop\\For Anti\\Member 1 Member 6 Merge\\backend\\ResQnet.Member1.Api\\ResQnet.Member1.Api.csproj",
+      "packagesPath": "C:\\Users\\HP\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\HP\\Desktop\\For Anti\\Member 1 Member 6 Merge\\backend\\ResQnet.Member1.Api\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Binuthi Jayasundara\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\HP\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -1864,11 +1864,11 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\Users\\Binuthi Jayasundara\\Downloads\\Member 1\\Member 1\\backend\\ResQnet.Member1.Application\\ResQnet.Member1.Application.csproj": {
-              "projectPath": "C:\\Users\\Binuthi Jayasundara\\Downloads\\Member 1\\Member 1\\backend\\ResQnet.Member1.Application\\ResQnet.Member1.Application.csproj"
+            "C:\\Users\\HP\\Desktop\\For Anti\\Member 1 Member 6 Merge\\backend\\ResQnet.Member1.Application\\ResQnet.Member1.Application.csproj": {
+              "projectPath": "C:\\Users\\HP\\Desktop\\For Anti\\Member 1 Member 6 Merge\\backend\\ResQnet.Member1.Application\\ResQnet.Member1.Application.csproj"
             },
-            "C:\\Users\\Binuthi Jayasundara\\Downloads\\Member 1\\Member 1\\backend\\ResQnet.Member1.Infrastructure\\ResQnet.Member1.Infrastructure.csproj": {
-              "projectPath": "C:\\Users\\Binuthi Jayasundara\\Downloads\\Member 1\\Member 1\\backend\\ResQnet.Member1.Infrastructure\\ResQnet.Member1.Infrastructure.csproj"
+            "C:\\Users\\HP\\Desktop\\For Anti\\Member 1 Member 6 Merge\\backend\\ResQnet.Member1.Infrastructure\\ResQnet.Member1.Infrastructure.csproj": {
+              "projectPath": "C:\\Users\\HP\\Desktop\\For Anti\\Member 1 Member 6 Merge\\backend\\ResQnet.Member1.Infrastructure\\ResQnet.Member1.Infrastructure.csproj"
             }
           }
         }
