@@ -1,115 +1,122 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Bot, Droplets, Handshake, MapPin, Siren, Stethoscope, Tent, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { User, AlertTriangle, ShieldCheck, Heart } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { citizenApi } from '../services/citizenApi';
+import { ActionCard, AlertBanner, CapacityBar, ErrorBox, Loading, PageHeader, StatCard, Stepper, useAsync } from '../components/citizen/ui';
 
 export const CitizenDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [aiOpen, setAiOpen] = useState(false);
+
+  const { data, loading, error, reload } = useAsync(async () => {
+    const [requests, shelters, alerts, notifications] = await Promise.all([
+      citizenApi.getRequests(), citizenApi.getShelters(), citizenApi.getAlerts(), citizenApi.getNotifications()
+    ]);
+    return { requests, shelters, alerts, notifications };
+  });
+
+  // When the phone comes back online, send requests that were saved offline.
+  useEffect(() => {
+    const onOnline = () => { citizenApi.flushQueue().then((n) => n > 0 && reload()); };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [reload]);
+
+  if (loading) return <Loading />;
+  if (error || !data) return <ErrorBox message={error ?? 'Could not load dashboard'} onRetry={reload} />;
+
+  const { requests, shelters, alerts, notifications } = data;
+  const topAlert = alerts.find((a) => a.level !== 'Info');
+  const active = requests.filter((r) => r.status !== 'Delivered');
+  const delivered = requests.filter((r) => r.status === 'Delivered');
+  const unread = notifications.filter((n) => !n.read).length;
+  const nearby = [...shelters].sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 3);
+  const latest = requests[0];
+  const firstName = (user?.fullName ?? 'Citizen').split(' ')[0];
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-      {/* Top Banner / Title */}
-      <div style={{ marginBottom: '28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <span className="badge badge-blue">
-            <User size={13} /> Citizen Portal
-          </span>
-          <span className="badge badge-green">
-            <ShieldCheck size={13} /> Active Session
-          </span>
+    <div className="cz-page">
+      <PageHeader
+        title="Citizen Dashboard"
+        subtitle={`Welcome back, ${firstName}. Get help, track your requests and find safe places.`}
+        chips={<span className="badge badge-blue">Public Crisis Support</span>}
+      />
+
+      {topAlert && <AlertBanner level={topAlert.level} title={topAlert.title} message={topAlert.message} />}
+
+      <div className="cz-row" style={{ marginBottom: 20 }}>
+        <button type="button" className="cz-sos" onClick={() => navigate('/citizen/request')}>
+          <Siren size={24} /> SOS: I need emergency help
+        </button>
         </div>
-        <h1 style={{ fontSize: '26px', fontWeight: 800, color: 'var(--color-navy)', letterSpacing: '-0.02em' }}>
-          Citizen Dashboard
-        </h1>
-        <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
-          Welcome back, <strong>{user?.fullName || 'Citizen'}</strong>! Access community disaster alerts, request emergency relief, and track aid assistance status.
-        </p>
+
+      <div className="cz-grid cz-grid-4">
+        <ActionCard tone="blue" icon={<Droplets size={22} />} title="Food & Water" subtitle="Request supplies" onClick={() => navigate('/citizen/request?category=Food%20%26%20Water')} />
+        <ActionCard tone="green" icon={<Tent size={22} />} title="Find Shelter" subtitle="Safe places near you" onClick={() => navigate('/citizen/shelters')} />
+        <ActionCard tone="red" icon={<Stethoscope size={22} />} title="Medical / Evac" subtitle="Urgent medical help" onClick={() => navigate('/citizen/request?category=Medical')} />
+        <ActionCard tone="navy" icon={<Handshake size={22} />} title="Volunteer / Donate" subtitle="Help others (coming soon)" onClick={() => alert('Volunteer and donation screens are built by Member 6 and will be linked later.')} />
       </div>
 
-      {/* Main Content Area: Base Interface Structure */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
-        {/* Left Column: Primary Interface Container */}
+      <div className="cz-grid cz-grid-4 cz-mt">
+        <StatCard label="Active requests" value={active.length} sub="Waiting for help" tone="amber" />
+        <StatCard label="Delivered" value={delivered.length} sub="Completed requests" tone="green" />
+        <StatCard label="Nearby shelters" value={shelters.length} sub="Within 10 km" tone="blue" />
+        <StatCard label="Unread alerts" value={unread} sub="Notifications" tone="navy" />
+      </div>
+
+      <div className="cz-grid cz-grid-2 cz-mt">
         <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--color-blue-soft)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--color-blue-brand)'
-            }}>
-              <Heart size={22} />
-            </div>
+          <h2 className="cz-h2">Live map</h2>
+          <div className="cz-map">
             <div>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-navy)' }}>
-                Citizen Services & Relief Portal
-              </h2>
-              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-                Role: Citizen · Interface Structure Placeholder
-              </p>
+              <MapPin size={28} /><br />Map view is connected by Member 5.<br />
+              <a href="https://www.google.com/maps/search/shelters+near+me" target="_blank" rel="noreferrer">Open shelters in Google Maps</a>
             </div>
           </div>
-
-          <div style={{
-            padding: '32px 24px',
-            backgroundColor: '#f8fafc',
-            borderRadius: 'var(--radius-md)',
-            border: '1px dashed var(--color-border)',
-            textAlign: 'center'
-          }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
-              Citizen Content Area
-            </h3>
-            <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '480px', margin: '0 auto 20px', lineHeight: '1.6' }}>
-              This is the dedicated dashboard interface structure established for the Citizen role. Citizen assistance modules, aid requests, and relief delivery tracking will be integrated here.
-            </p>
-            <button
-              onClick={() => navigate('/emergency-help')}
-              style={{
-                backgroundColor: 'var(--color-red-danger)',
-                color: '#ffffff',
-                padding: '10px 20px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '13px',
-                fontWeight: 700
-              }}
-            >
-              <AlertTriangle size={16} /> Request Emergency Assistance
-            </button>
-          </div>
         </div>
-
-        {/* Right Column: Account Status Placeholder */}
         <div className="card">
-          <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--color-navy)', marginBottom: '16px' }}>
-            Profile & Session Info
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
-              <span style={{ color: 'var(--color-text-muted)' }}>Account Name:</span>
-              <strong style={{ color: 'var(--color-navy)' }}>{user?.fullName || 'Citizen User'}</strong>
+          <h2 className="cz-h2">My request status</h2>
+          {latest ? (
+            <>
+              <div className="cz-between">
+                <strong>{latest.reference}</strong>
+                <span className={`badge ${latest.status === 'Delivered' ? 'badge-green' : 'badge-amber'}`}>{latest.status}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
-              <span style={{ color: 'var(--color-text-muted)' }}>Email:</span>
-              <span style={{ color: 'var(--color-navy)' }}>{user?.email || 'citizen@resqnet.org'}</span>
+              <div className="cz-muted">{latest.category}</div>
+              <Stepper status={latest.status} />
+              {latest.etaMinutes && <div className="cz-muted">ETA: about {latest.etaMinutes} min</div>}
+              <Link to="/citizen/requests" style={{ display: 'inline-block', marginTop: 10, fontSize: 13 }}>View all requests</Link>
+            </>
+          ) : <div className="cz-muted">You have no requests yet.</div>}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
-              <span style={{ color: 'var(--color-text-muted)' }}>System Role:</span>
-              <span className="badge badge-blue">Citizen</span>
+      </div>
+
+      <div className="card cz-mt">
+        <div className="cz-between"><h2 className="cz-h2">Nearby shelters</h2><Link to="/citizen/shelters" style={{ fontSize: 13 }}>See all</Link></div>
+        <div className="cz-grid cz-grid-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+          {nearby.map((s) => (
+            <div key={s.id} className="cz-item" style={{ display: 'block', cursor: 'default' }}>
+              <strong style={{ fontSize: 14 }}>{s.name}</strong>
+              <div className="cz-muted" style={{ marginBottom: 8 }}>{s.distanceKm} km away</div>
+              <CapacityBar occupied={s.occupied} capacity={s.capacity} />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--color-text-muted)' }}>Status:</span>
-              <span className="badge badge-green">Verified</span>
+          ))}
+        </div>
             </div>
+
+      <button type="button" className="btn-primary" style={{ position: 'fixed', right: 20, bottom: 20, borderRadius: 999, minHeight: 48, zIndex: 40 }} onClick={() => setAiOpen(true)}>
+        <Bot size={18} /> AI Assistant
+      </button>
+      {aiOpen && (
+        <div className="cz-toast" style={{ background: 'var(--color-primary-dark)', bottom: 80 }} role="dialog" aria-label="AI Assistant">
+          <div className="cz-row">
+            <span>AI Assistant is connected by Member 4 later.</span>
+            <button type="button" aria-label="Close" onClick={() => setAiOpen(false)} style={{ background: 'transparent', color: '#fff' }}><X size={16} /></button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
