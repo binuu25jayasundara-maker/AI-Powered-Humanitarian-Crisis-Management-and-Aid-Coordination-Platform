@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "mq5/TuGpRc4=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\HP\\Desktop\\For Anti\\136\\backend\\ResQnet.Member6.Application\\ResQnet.Member6.Application.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\HP\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\10.0.12\\microsoft.extensions.dependencyinjection.abstractions.10.0.12.nupkg.sha512",
+    "C:\\Users\\HP\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\10.0.12\\microsoft.extensions.logging.abstractions.10.0.12.nupkg.sha512"
+  ],
+  "logs": []
+}
