@@ -16,15 +16,42 @@ import {
   MessageSquare,
   BookOpen,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  CalendarClock,
+  Handshake,
+  BarChart3,
+  BrainCircuit,
+  ScrollText,
+  Bell,
+  Settings,
+  MapPin,
+  LucideIcon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+interface NavItem {
+  name: string;
+  path: string;
+  icon: LucideIcon;
+  section?: string;
+}
+
+// Coordination & Governance module navigation (shared by EmergencyCoordinator and SystemAdmin)
+const coordinationNav = (dashboardPath: string): NavItem[] => [
+  { name: 'Coordinator Dashboard', path: dashboardPath, icon: Radio, section: 'Coordination' },
+  { name: 'Case Queue', path: '/coordination/cases', icon: ClipboardList },
+  { name: 'Crisis Events', path: '/coordination/events', icon: CalendarClock },
+  { name: 'Partner Coordination', path: '/coordination/partners', icon: Handshake },
+  { name: 'Reports', path: '/coordination/reports', icon: BarChart3 },
+  { name: 'AI Review Queue', path: '/governance/ai-review', icon: BrainCircuit, section: 'Governance' },
+  { name: 'AI Decision Log', path: '/governance/ai-decisions', icon: ScrollText }
+];
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
-  const getNavItemsForRole = (role?: string) => {
+  const getNavItemsForRole = (role?: string): NavItem[] => {
     switch (role) {
       case 'SystemAdmin':
         return [
@@ -35,7 +62,8 @@ export const Sidebar: React.FC = () => {
           { name: 'Audit Log Viewer', path: '/admin/audit', icon: FileText },
           { name: 'Volunteer Management', path: '/volunteers', icon: HeartHandshake },
           { name: 'Communication Center', path: '/communications', icon: MessageSquare },
-          { name: 'Emergency Help', path: '/emergency-help', icon: AlertTriangle }
+          { name: 'Emergency Help', path: '/emergency-help', icon: AlertTriangle },
+          ...coordinationNav('/dashboard/emergency-coordinator')
         ];
       case 'DonorOfficer':
         return [
@@ -52,8 +80,8 @@ export const Sidebar: React.FC = () => {
         ];
       case 'EmergencyCoordinator':
         return [
-          { name: 'Coordinator Dashboard', path: '/dashboard/emergency-coordinator', icon: Radio },
-          { name: 'Emergency Distress Hub', path: '/emergency-help', icon: AlertTriangle }
+          ...coordinationNav('/dashboard/emergency-coordinator'),
+          { name: 'Emergency Distress Hub', path: '/emergency-help', icon: AlertTriangle, section: 'Emergency' }
         ];
       case 'CaseManager':
         return [
@@ -64,7 +92,12 @@ export const Sidebar: React.FC = () => {
       default:
         return [
           { name: 'Citizen Dashboard', path: '/dashboard/citizen', icon: UserIcon },
-          { name: 'Request Emergency Help', path: '/emergency-help', icon: AlertTriangle }
+          { name: 'Request Help', path: '/citizen/request', icon: AlertTriangle },
+          { name: 'My Requests', path: '/citizen/requests', icon: ClipboardList },
+          { name: 'Map & Shelters', path: '/citizen/shelters', icon: MapPin },
+          { name: 'Safety Alerts', path: '/citizen/alerts', icon: ShieldCheck },
+          { name: 'Notifications', path: '/citizen/notifications', icon: Bell },
+          { name: 'Profile & Settings', path: '/citizen/profile', icon: Settings }
         ];
     }
   };
@@ -127,6 +160,18 @@ export const Sidebar: React.FC = () => {
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
+            <React.Fragment key={item.path}>
+              {item.section && !collapsed && (
+                <div style={{
+                  fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.45)', padding: '12px 12px 4px'
+                }}>
+                  {item.section}
+                </div>
+              )}
+              {item.section && collapsed && (
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.12)', margin: '8px 6px' }} />
+              )}
             <NavLink
               key={item.path}
               to={item.path}
@@ -155,6 +200,7 @@ export const Sidebar: React.FC = () => {
                 </>
               )}
             </NavLink>
+            </React.Fragment>
           );
         })}
       </nav>

@@ -12,11 +12,27 @@ import { EmergencyHelpPage } from './pages/EmergencyHelpPage';
 
 // Six Separate Role-Based Dashboards (Preserved from Phase 1)
 import { CitizenDashboardPage } from './pages/CitizenDashboardPage';
+import { RequestPage } from './pages/citizen/RequestPage';
+import { TrackerPage } from './pages/citizen/TrackerPage';
+import { SheltersPage } from './pages/citizen/SheltersPage';
+import { AlertsPage } from './pages/citizen/AlertsPage';
+import { NotificationsPage } from './pages/citizen/NotificationsPage';
+import { ProfilePage } from './pages/citizen/ProfilePage';
+
 import { SystemAdminDashboardPage } from './pages/SystemAdminDashboardPage';
-import { EmergencyCoordinatorDashboardPage } from './pages/EmergencyCoordinatorDashboardPage';
 import { CaseManagerDashboardPage } from './pages/CaseManagerDashboardPage';
 import { VolunteerCoordinatorDashboardPage } from './pages/VolunteerCoordinatorDashboardPage';
 import { DonorOfficerDashboardPage } from './pages/DonorOfficerDashboardPage';
+
+// Coordination & Governance Module
+import { CoordinatorDashboard } from './pages/coordination/CoordinatorDashboard';
+import { CaseQueuePage } from './pages/coordination/CaseQueuePage';
+import { CaseDetailPage } from './pages/coordination/CaseDetailPage';
+import { CrisisEventsPage } from './pages/coordination/CrisisEventsPage';
+import { PartnerCoordinationPage } from './pages/coordination/PartnerCoordinationPage';
+import { ReportsPage } from './pages/coordination/ReportsPage';
+import { AIReviewQueuePage } from './pages/coordination/AIReviewQueuePage';
+import { AIDecisionLogPage } from './pages/coordination/AIDecisionLogPage';
 
 // Member 6 Integrated Modules
 import { DonorsCampaignsPage } from './pages/DonorsCampaignsPage';
@@ -59,6 +75,12 @@ export const App: React.FC = () => {
           {/* Six Separate Role Dashboard Landing Routes */}
           <Route element={<ProtectedRoute allowedRoles={['Citizen', 'SystemAdmin']} />}>
             <Route path="/dashboard/citizen" element={<CitizenDashboardPage />} />
+            <Route path="/citizen/request" element={<RequestPage />} />
+            <Route path="/citizen/requests" element={<TrackerPage />} />
+            <Route path="/citizen/shelters" element={<SheltersPage />} />
+            <Route path="/citizen/alerts" element={<AlertsPage />} />
+            <Route path="/citizen/notifications" element={<NotificationsPage />} />
+            <Route path="/citizen/profile" element={<ProfilePage />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['SystemAdmin']} />}>
@@ -71,7 +93,16 @@ export const App: React.FC = () => {
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['EmergencyCoordinator', 'SystemAdmin']} />}>
-            <Route path="/dashboard/emergency-coordinator" element={<EmergencyCoordinatorDashboardPage />} />
+            <Route path="/dashboard/emergency-coordinator" element={<CoordinatorDashboard />} />
+            {/* Coordination */}
+            <Route path="/coordination/cases" element={<CaseQueuePage />} />
+            <Route path="/coordination/cases/:caseId" element={<CaseDetailPage />} />
+            <Route path="/coordination/events" element={<CrisisEventsPage />} />
+            <Route path="/coordination/partners" element={<PartnerCoordinationPage />} />
+            <Route path="/coordination/reports" element={<ReportsPage />} />
+            {/* Governance */}
+            <Route path="/governance/ai-review" element={<AIReviewQueuePage />} />
+            <Route path="/governance/ai-decisions" element={<AIDecisionLogPage />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['CaseManager', 'SystemAdmin']} />}>
