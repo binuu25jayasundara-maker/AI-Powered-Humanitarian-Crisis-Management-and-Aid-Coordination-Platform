@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ResQnet.Member4.Api/ResQnet.Member4.Api.csproj" />
+  <Project Path="ResQnet.Member4.Application/ResQnet.Member4.Application.csproj" />
+  <Project Path="ResQnet.Member4.Domain/ResQnet.Member4.Domain.csproj" />
+  <Project Path="ResQnet.Member4.Infrastructure/ResQnet.Member4.Infrastructure.csproj" />
+  <Project Path="ResQnet.Member4.Tests/ResQnet.Member4.Tests.csproj" />
+</Solution>

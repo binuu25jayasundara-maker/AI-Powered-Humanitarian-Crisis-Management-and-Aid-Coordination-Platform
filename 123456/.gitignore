@@ -1,0 +1,13 @@
+# build output
+bin/
+obj/
+dist/
+node_modules/
+.vs/
+*.user
+# secrets and local config
+.env
+appsettings.*.local.json
+# OS / editor
+.DS_Store
+Thumbs.db

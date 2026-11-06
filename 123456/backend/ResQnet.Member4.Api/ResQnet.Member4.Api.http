@@ -1,0 +1,6 @@
+@ResQnet.Member4.Api_HostAddress = http://localhost:5157
+
+GET {{ResQnet.Member4.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
