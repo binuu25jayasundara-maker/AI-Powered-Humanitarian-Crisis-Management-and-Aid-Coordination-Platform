@@ -30,21 +30,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     if (string.Equals(connectionString, "InMemory", StringComparison.OrdinalIgnoreCase))
     {
-        options.UseInMemoryDatabase("ResQnet_Member6_InMemoryDb");
+        options.UseInMemoryDatabase("ResQnet_Volunteers");
     }
     else
     {
-        try
+        options.UseSqlServer(connectionString, sqlOptions =>
         {
-            options.UseSqlServer(connectionString, sqlOptions =>
-            {
-                sqlOptions.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null);
-            });
-        }
-        catch
-        {
-            options.UseInMemoryDatabase("ResQnet_Member6_InMemoryDb");
-        }
+            sqlOptions.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null);
+        });
     }
 });
 
@@ -114,7 +107,7 @@ using (var scope = app.Services.CreateScope())
     {
         logger.LogWarning(ex, "Failed to connect to SQL Server, initializing InMemory fallback.");
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-        optionsBuilder.UseInMemoryDatabase("ResQnet_Member6_InMemoryDb");
+        optionsBuilder.UseInMemoryDatabase("ResQnet_Volunteers");
         using var inMemoryDb = new ApplicationDbContext(optionsBuilder.Options);
         await DbInitializer.SeedAsync(inMemoryDb);
     }

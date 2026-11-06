@@ -10,13 +10,13 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    if (!string.IsNullOrEmpty(connectionString) && !connectionString.Contains("InMemory", StringComparison.OrdinalIgnoreCase))
+    if (string.Equals(connectionString, "InMemory", StringComparison.OrdinalIgnoreCase))
     {
-        options.UseSqlite(connectionString);
+        options.UseInMemoryDatabase("ResQnet_Resources");
     }
     else
     {
-        options.UseInMemoryDatabase("ResQnet_Member5_Dev");
+        options.UseSqlServer(connectionString);
     }
 });
 
