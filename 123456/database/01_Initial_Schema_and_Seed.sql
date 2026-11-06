@@ -4,13 +4,13 @@
 -- Target Database: Microsoft SQL Server 2019 / 2022 / Azure SQL
 -- =========================================================================================
 
-IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'ResQnet_Core_Db')
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'ResQnet_Identity')
 BEGIN
-    CREATE DATABASE [ResQnet_Core_Db];
+    CREATE DATABASE [ResQnet_Identity];
 END
 GO
 
-USE [ResQnet_Core_Db];
+USE [ResQnet_Identity];
 GO
 
 -- 1. Organizations Table

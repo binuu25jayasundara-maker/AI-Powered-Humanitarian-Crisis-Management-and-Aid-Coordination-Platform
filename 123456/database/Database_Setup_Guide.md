@@ -18,40 +18,37 @@ Open `Member1_Complete_Project/backend/ResQnet.Member1.Api/appsettings.json` and
 #### Standard LocalDB (Default):
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=ResQnet_Core_Db;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True"
+  "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=ResQnet_Identity;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True"
 }
 ```
 
 #### SQL Server Express:
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Server=localhost\\SQLEXPRESS;Database=ResQnet_Core_Db;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True"
+  "DefaultConnection": "Server=localhost\\SQLEXPRESS;Database=ResQnet_Identity;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True"
 }
 ```
 
 #### SQL Server with SQL Authentication:
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Server=localhost,1433;Database=ResQnet_Core_Db;User Id=sa;Password=YourStrongPassword!;TrustServerCertificate=True"
+  "DefaultConnection": "Server=localhost,1433;Database=ResQnet_Identity;User Id=sa;Password=YourStrongPassword!;TrustServerCertificate=True"
 }
 ```
 
-> **Automatic In-Memory Fallback**: If you do not have SQL Server installed on your testing machine, set `DefaultConnection: "InMemory"` in `appsettings.json`. The application will automatically boot an in-memory database with all seed entities populated for immediate testing!
+> **Automatic In-Memory Fallback**: If you do not have SQL Server installed on your testing machine, set `DefaultConnection: "InMemory"` in `appsettings.json` (or use `appsettings.Development.json`). The application will automatically boot an in-memory database with all seed entities populated for immediate testing!
 
 ---
 
 ### 3. Running Database Scripts via SSMS
 1. Open SQL Server Management Studio and connect to your database engine.
-2. Click **File -> Open -> File...** and select `01_Initial_Schema_and_Seed.sql`.
+2. Run the script corresponding to the API module you are deploying:
+   - **Member 1 (Identity & Admin)**: `01_Initial_Schema_and_Seed.sql` -> creates `[ResQnet_Identity]`
+   - **Member 4 (AI Services)**: `01_Member4_AI_Schema_and_Seed.sql` -> creates `[ResQnet_AI]`
+   - **Member 5 (Resources & Shelters)**: `01_Member5_Resources_Schema_and_Seed.sql` -> creates `[ResQnet_Resources]`
+   - **Member 6 (Volunteers & Donors)**: `01_Member6_Schema_and_Seed.sql` -> creates `[ResQnet_Volunteers]`
 3. Click **Execute** (`F5`).
-4. Verify that database `ResQnet_Core_Db` is created with tables:
-   - `dbo.Organizations`
-   - `dbo.Users`
-   - `dbo.Roles`
-   - `dbo.Permissions`
-   - `dbo.RolePermissions`
-   - `dbo.AuditEvents`
-   - `dbo.RefreshTokens`
+4. Verify that the respective database is created.
 
 ---
 
