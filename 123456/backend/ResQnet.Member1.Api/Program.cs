@@ -42,7 +42,24 @@ builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 
 // 3. Configure JWT Authentication
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "ResQnet_Secret_Super_Secure_Key_2026_SE205_3_Key!";
+// Production: key MUST come from the Jwt__Key environment variable.
+// Development: key falls back to appsettings.Development.json.
+// If neither is set the application will refuse to start (fail-fast).
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    jwtKey = Environment.GetEnvironmentVariable("Jwt__Key");
+}
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    if (builder.Environment.IsProduction())
+        throw new InvalidOperationException(
+            "JWT signing key is not configured. " +
+            "Set the Jwt__Key environment variable before starting in Production.");
+
+    // Development fallback (should be overridden by appsettings.Development.json)
+    jwtKey = "DEVELOPMENT_ONLY_ResQnet_Secret_Super_Secure_Key_2026!";
+}
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ResQnet.API";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ResQnet.Client";
 
@@ -73,12 +90,12 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("StaffOnly", policy => policy.RequireRole("SystemAdmin", "EmergencyCoordinator", "CaseManager", "VolunteerCoordinator", "DonorOfficer"));
 });
 
-// 4. CORS
+// 4. CORS — restricted to the ResQnet frontend origins only
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("ResQnetFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -121,9 +138,12 @@ if (app.Environment.IsDevelopment() || true)
     });
 }
 
-app.UseCors("AllowAll");
+app.UseCors("ResQnetFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Required for WebApplicationFactory<Program> in integration tests
+public partial class Program { }

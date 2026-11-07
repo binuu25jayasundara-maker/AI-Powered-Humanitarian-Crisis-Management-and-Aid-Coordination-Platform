@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResQnet.Member5.Api.DTOs;
 using ResQnet.Member5.Api.Interfaces;
 
 namespace ResQnet.Member5.Api.Controllers
 {
+    // Map situational awareness — any authenticated user
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class MapController : ControllerBase
     {
         private readonly IMapService _mapService;

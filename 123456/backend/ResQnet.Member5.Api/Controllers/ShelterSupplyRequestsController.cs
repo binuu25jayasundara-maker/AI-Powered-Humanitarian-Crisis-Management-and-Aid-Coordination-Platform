@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResQnet.Member5.Api.DTOs;
 using ResQnet.Member5.Api.Interfaces;
 
 namespace ResQnet.Member5.Api.Controllers
 {
+    // Shelter supply requests: ShelterAdmin manages; EmergencyCoordinator and LogisticsManager may read
     [ApiController]
     [Route("api/shelter-supply-requests")]
+    [Authorize(Roles = "ShelterAdmin,EmergencyCoordinator,LogisticsManager")]
     public class ShelterSupplyRequestsController : ControllerBase
     {
         private readonly IShelterService _shelterService;
@@ -25,6 +28,7 @@ namespace ResQnet.Member5.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "ShelterAdmin")]
         public async Task<ActionResult<ShelterSupplyRequestDto>> Create([FromBody] CreateShelterSupplyRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -33,6 +37,7 @@ namespace ResQnet.Member5.Api.Controllers
         }
 
         [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "ShelterAdmin")]
         public async Task<ActionResult<ShelterSupplyRequestDto>> UpdateStatus(int id, [FromBody] UpdateShelterSupplyStatusDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

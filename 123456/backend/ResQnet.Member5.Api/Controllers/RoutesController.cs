@@ -1,12 +1,15 @@
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResQnet.Member5.Api.DTOs;
 using ResQnet.Member5.Api.Interfaces;
 
 namespace ResQnet.Member5.Api.Controllers
 {
+    // Route planning — logistics and emergency coordination
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "LogisticsManager,EmergencyCoordinator")]
     public class RoutesController : ControllerBase
     {
         private readonly IMapService _mapService;

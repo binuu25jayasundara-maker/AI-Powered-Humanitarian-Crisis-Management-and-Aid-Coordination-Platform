@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResQnet.Member6.Application.DTOs;
 using ResQnet.Member6.Application.Services;
@@ -6,6 +7,7 @@ namespace ResQnet.Member6.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class NotificationsController : ControllerBase
 {
     private readonly NotificationService _notificationService;

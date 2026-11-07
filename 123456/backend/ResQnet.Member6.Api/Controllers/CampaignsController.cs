@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResQnet.Member6.Application.DTOs;
 using ResQnet.Member6.Application.Services;
@@ -6,6 +7,7 @@ namespace ResQnet.Member6.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "DonorOfficer")]
 public class CampaignsController : ControllerBase
 {
     private readonly CampaignService _campaignService;

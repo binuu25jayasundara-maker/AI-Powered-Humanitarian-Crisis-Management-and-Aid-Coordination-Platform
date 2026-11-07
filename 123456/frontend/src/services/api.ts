@@ -1163,7 +1163,10 @@ export const api = {
   // ----------------------------------------
   async getCampaignKpis(): Promise<CampaignKpis> {
     try {
-      const res = await fetch(`${VOLUNTEERS_API_URL}/campaigns/kpis`);
+      const token = localStorage.getItem('resqnet_token');
+      const res = await fetch(`${VOLUNTEERS_API_URL}/campaigns/kpis`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       if (res.ok) return await res.json();
     } catch {}
     return fallbackKpis;
@@ -1171,7 +1174,10 @@ export const api = {
 
   async getDonations(): Promise<Donation[]> {
     try {
-      const res = await fetch(`${VOLUNTEERS_API_URL}/donations`);
+      const token = localStorage.getItem('resqnet_token');
+      const res = await fetch(`${VOLUNTEERS_API_URL}/donations`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       if (res.ok) return await res.json();
     } catch {}
     return fallbackDonations;
@@ -1184,9 +1190,13 @@ export const api = {
     flag?: string;
   }): Promise<Donation> {
     try {
+      const token = localStorage.getItem('resqnet_token');
       const res = await fetch(`${VOLUNTEERS_API_URL}/donations`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(donation)
       });
       if (res.ok) return await res.json();
@@ -1210,7 +1220,10 @@ export const api = {
 
   async getVolunteers(): Promise<Volunteer[]> {
     try {
-      const res = await fetch(`${VOLUNTEERS_API_URL}/volunteers`);
+      const token = localStorage.getItem('resqnet_token');
+      const res = await fetch(`${VOLUNTEERS_API_URL}/volunteers`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       if (res.ok) return await res.json();
     } catch {}
     return fallbackVolunteers;
@@ -1218,7 +1231,10 @@ export const api = {
 
   async getTaskMatchingRecommendation(): Promise<TaskMatchingRecommendation> {
     try {
-      const res = await fetch(`${VOLUNTEERS_API_URL}/volunteers/task-matching`);
+      const token = localStorage.getItem('resqnet_token');
+      const res = await fetch(`${VOLUNTEERS_API_URL}/volunteers/task-matching`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       if (res.ok) return await res.json();
     } catch {}
     return fallbackRecommendation;
@@ -1226,9 +1242,13 @@ export const api = {
 
   async assignVolunteerToTask(taskId: string, volunteerId: string): Promise<boolean> {
     try {
+      const token = localStorage.getItem('resqnet_token');
       const res = await fetch(`${VOLUNTEERS_API_URL}/volunteers/assign-task`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ taskId, volunteerId })
       });
       if (res.ok) return true;
@@ -1245,9 +1265,13 @@ export const api = {
     skills: string;
   }): Promise<Volunteer> {
     try {
+      const token = localStorage.getItem('resqnet_token');
       const res = await fetch(`${VOLUNTEERS_API_URL}/volunteers`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(volunteer)
       });
       if (res.ok) return await res.json();
@@ -1276,9 +1300,13 @@ export const api = {
     idempotencyKey?: string;
   }): Promise<NotificationResult> {
     try {
+      const token = localStorage.getItem('resqnet_token');
       const res = await fetch(`${VOLUNTEERS_API_URL}/notifications/send`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(req)
       });
       if (res.ok) return await res.json();
@@ -1296,7 +1324,10 @@ export const api = {
 
   async getNotificationHistory(): Promise<NotificationRecord[]> {
     try {
-      const res = await fetch(`${VOLUNTEERS_API_URL}/notifications/history`);
+      const token = localStorage.getItem('resqnet_token');
+      const res = await fetch(`${VOLUNTEERS_API_URL}/notifications/history`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       if (res.ok) return await res.json();
     } catch {}
     return [

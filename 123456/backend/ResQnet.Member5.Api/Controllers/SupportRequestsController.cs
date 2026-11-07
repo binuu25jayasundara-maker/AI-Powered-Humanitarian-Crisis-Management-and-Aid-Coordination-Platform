@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResQnet.Member5.Api.DTOs;
 using ResQnet.Member5.Api.Interfaces;
@@ -18,6 +19,7 @@ namespace ResQnet.Member5.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "LogisticsManager,EmergencyCoordinator")]
         public async Task<ActionResult<List<PartnerSupportRequestDto>>> GetAll()
         {
             var requests = await _resourceService.GetPartnerSupportRequestsAsync();
@@ -25,6 +27,7 @@ namespace ResQnet.Member5.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<PartnerSupportRequestDto>> Create([FromBody] CreatePartnerSupportRequestDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -33,6 +36,7 @@ namespace ResQnet.Member5.Api.Controllers
         }
 
         [HttpPut("{id:int}/status")]
+        [Authorize(Roles = "LogisticsManager,EmergencyCoordinator")]
         public async Task<ActionResult<PartnerSupportRequestDto>> UpdateStatus(int id, [FromBody] UpdateSupportRequestStatusDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

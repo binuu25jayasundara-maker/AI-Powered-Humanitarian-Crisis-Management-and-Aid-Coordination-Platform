@@ -75,9 +75,14 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 // ─── Network request helper with automatic fallback ───────────────────────────
 async function safeFetch<T>(path: string, options?: RequestInit, fallback?: () => T | Promise<T>): Promise<T> {
   try {
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem('resqnet_token') : null;
     const res = await fetch(`${BASE_URL}${path}`, {
       ...options,
-      headers: { 'Content-Type': 'application/json', ...(options?.headers ?? {}) },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options?.headers ?? {})
+      },
     });
     if (res.ok) {
       if (res.status === 204) return undefined as unknown as T;

@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResQnet.Member5.Api.DTOs;
 using ResQnet.Member5.Api.Interfaces;
 
 namespace ResQnet.Member5.Api.Controllers
 {
+    // Resources and allocations: full control = LogisticsManager; read = LogisticsManager + EmergencyCoordinator
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "LogisticsManager,EmergencyCoordinator")]
     public class ResourcesController : ControllerBase
     {
         private readonly IResourceService _resourceService;
@@ -33,6 +36,7 @@ namespace ResQnet.Member5.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "LogisticsManager")]
         public async Task<ActionResult<ResourceDto>> Create([FromBody] CreateResourceDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -41,6 +45,7 @@ namespace ResQnet.Member5.Api.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(Roles = "LogisticsManager")]
         public async Task<ActionResult<ResourceDto>> Update(int id, [FromBody] UpdateResourceDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -50,6 +55,7 @@ namespace ResQnet.Member5.Api.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "LogisticsManager")]
         public async Task<IActionResult> Delete(int id)
         {
             var success = await _resourceService.DeleteResourceAsync(id);

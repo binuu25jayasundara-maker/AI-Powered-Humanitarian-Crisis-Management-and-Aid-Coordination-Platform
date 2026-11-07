@@ -13,6 +13,7 @@ namespace ResQnet.Member1.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "SystemAdmin")]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -64,6 +65,7 @@ namespace ResQnet.Member1.Api.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "SystemAdmin")]
     public class RolesController : ControllerBase
     {
         private readonly IRoleService _roleService;
@@ -100,6 +102,7 @@ namespace ResQnet.Member1.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize]  // Any authenticated user may list organisations
         public async Task<ActionResult<ApiResponse<IReadOnlyList<OrganizationDto>>>> GetAll()
         {
             var orgs = await _orgService.GetAllAsync();
@@ -107,6 +110,7 @@ namespace ResQnet.Member1.Api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "SystemAdmin")]
         public async Task<ActionResult<ApiResponse<OrganizationDto>>> Create([FromBody] CreateOrganizationRequest request)
         {
             var actor = User.FindFirst(ClaimTypes.Email)?.Value ?? "admin@resqnet.org";
@@ -115,6 +119,7 @@ namespace ResQnet.Member1.Api.Controllers
         }
 
         [HttpPost("{id}/verify")]
+        [Authorize(Roles = "SystemAdmin")]
         public async Task<ActionResult<ApiResponse<bool>>> Verify(Guid id)
         {
             var actor = User.FindFirst(ClaimTypes.Email)?.Value ?? "admin@resqnet.org";
@@ -125,6 +130,7 @@ namespace ResQnet.Member1.Api.Controllers
 
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "SystemAdmin,EmergencyCoordinator")]
     public class AuditController : ControllerBase
     {
         private readonly IAuditService _auditService;

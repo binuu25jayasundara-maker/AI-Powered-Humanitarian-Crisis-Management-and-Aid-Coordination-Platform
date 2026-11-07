@@ -1,4 +1,7 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using ResQnet.Member6.Application.Interfaces;
 using ResQnet.Member6.Application.Services;
 using ResQnet.Member6.Domain.Events;
@@ -63,21 +66,65 @@ builder.Services.AddScoped<CampaignService>();
 builder.Services.AddScoped<DonationService>();
 builder.Services.AddScoped<NotificationService>();
 
-// Configure CORS
+// Configure JWT Authentication
+// Production: key MUST come from the Jwt__Key environment variable.
+// Development: key falls back to appsettings.Development.json.
+// If neither is set the application will refuse to start (fail-fast).
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    jwtKey = Environment.GetEnvironmentVariable("Jwt__Key");
+}
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    if (builder.Environment.IsProduction())
+        throw new InvalidOperationException(
+            "JWT signing key is not configured. " +
+            "Set the Jwt__Key environment variable before starting in Production.");
+
+    // Development fallback (should be overridden by appsettings.Development.json)
+    jwtKey = "DEVELOPMENT_ONLY_ResQnet_Secret_Super_Secure_Key_2026!";
+}
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ResQnet.API";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ResQnet.Client";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
+builder.Services.AddAuthorization();
+
+// Configure CORS — restricted to the ResQnet frontend origins only
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("ResQnetFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.WithOrigins("http://localhost:5173", "http://127.0.0.1:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
 var app = builder.Build();
 
 // Configure Middleware Pipeline
-app.UseCors("AllowAll");
+app.UseCors("ResQnetFrontend");
 
 if (app.Environment.IsDevelopment() || true)
 {
@@ -89,6 +136,7 @@ if (app.Environment.IsDevelopment() || true)
     });
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
@@ -114,3 +162,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+// Required for WebApplicationFactory<Program> in integration tests
+public partial class Program { }

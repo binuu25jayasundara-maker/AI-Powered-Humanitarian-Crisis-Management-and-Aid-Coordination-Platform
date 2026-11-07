@@ -180,7 +180,9 @@ namespace ResQnet.Member1.Application.Services
         {
             return role switch
             {
-                "SystemAdmin" => new List<string> { "users.manage", "roles.manage", "orgs.manage", "audit.view", "cases.all", "ai.all" },
+                // NOTE: "cases.all" and "ai.all" are intentionally excluded from the automatic
+                // SystemAdmin permission set (SRS §8.1). A separate explicit grant is required.
+                "SystemAdmin" => new List<string> { "users.manage", "roles.manage", "orgs.manage", "audit.view" },
                 "EmergencyCoordinator" => new List<string> { "cases.manage", "cases.approve", "ai.review", "audit.view" },
                 "CaseManager" => new List<string> { "cases.view", "cases.update", "ai.review" },
                 "VolunteerCoordinator" => new List<string> { "volunteers.manage", "tasks.assign" },

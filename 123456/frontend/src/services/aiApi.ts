@@ -12,6 +12,14 @@ import { AI_API_URL } from '../config';
 
 const AI_API_BASE = AI_API_URL;
 
+function getAuthHeaders(extra?: Record<string, string>): Record<string, string> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('resqnet_token') : null;
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(extra ?? {})
+  };
+}
+
 const STORAGE_KEYS = {
   HEALTH: 'resqnet_ai_health_v1',
   FAILURES: 'resqnet_ai_failures_v1',
@@ -285,7 +293,8 @@ export const aiApi = {
       const timeoutId = setTimeout(() => controller.abort(), 2500);
 
       const res = await fetch(`${AI_API_BASE}/ai/forecasts`, {
-        signal: controller.signal
+        signal: controller.signal,
+        headers: getAuthHeaders()
       });
       clearTimeout(timeoutId);
 
@@ -346,7 +355,9 @@ export const aiApi = {
 
     if (!isSimOffline) {
       try {
-        const res = await fetch(`${AI_API_BASE}/cases/${cleanNum}`);
+        const res = await fetch(`${AI_API_BASE}/cases/${cleanNum}`, {
+          headers: getAuthHeaders()
+        });
         if (res.ok) {
           const json: ApiResponse<CaseReview> = await res.json();
           return json.data;
@@ -374,7 +385,7 @@ export const aiApi = {
     try {
       const res = await fetch(`${AI_API_BASE}/cases/${cleanNum}/decision`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           action,
           justification,
@@ -427,7 +438,7 @@ export const aiApi = {
 
         const res = await fetch(`${AI_API_BASE}/ai/chat`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({
             question,
             caseNumber,
@@ -569,7 +580,9 @@ export const aiApi = {
     const isSimOffline = this.isSimulatedOffline();
     if (!isSimOffline) {
       try {
-        const res = await fetch(`${AI_API_BASE}/ai/forecasts`);
+        const res = await fetch(`${AI_API_BASE}/ai/forecasts`, {
+          headers: getAuthHeaders()
+        });
         if (res.ok) {
           const json: ApiResponse<DemandForecast[]> = await res.json();
           return json.data;

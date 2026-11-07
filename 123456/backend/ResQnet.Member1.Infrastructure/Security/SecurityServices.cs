@@ -42,7 +42,9 @@ namespace ResQnet.Member1.Infrastructure.Security
 
         public string GenerateToken(User user, IEnumerable<string> roles, IEnumerable<string> permissions)
         {
-            var secretKey = _configuration["Jwt:Key"] ?? "ResQnet_Secret_Super_Secure_Key_2026_SE205_3_Key!";
+            var secretKey = _configuration["Jwt:Key"]
+                ?? Environment.GetEnvironmentVariable("Jwt__Key")
+                ?? "DEVELOPMENT_ONLY_ResQnet_Secret_Super_Secure_Key_2026!";
             var issuer = _configuration["Jwt:Issuer"] ?? "ResQnet.API";
             var audience = _configuration["Jwt:Audience"] ?? "ResQnet.Client";
             var expiryMinutes = int.TryParse(_configuration["Jwt:ExpiryMinutes"], out var minutes) ? minutes : 120;
