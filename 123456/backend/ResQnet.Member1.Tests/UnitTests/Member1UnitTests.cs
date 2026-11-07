@@ -207,5 +207,36 @@ namespace ResQnet.Member1.Tests.UnitTests
             Assert.NotNull(retrieved);
             Assert.Equal("RC-KANDY", retrieved.Code);
         }
+
+        [Fact]
+        public async Task DbInitializer_Seeds_LogisticsShelterPartnerUsers_And_PartnerOfficerRole()
+        {
+            // Arrange
+            using var context = CreateInMemoryDbContext();
+            var hasher = new PasswordHasher();
+
+            // Act
+            await DbInitializer.SeedAsync(context, hasher);
+
+            // Assert roles
+            var partnerRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "PartnerOfficer");
+            Assert.NotNull(partnerRole);
+
+            // Assert users
+            var logistics = await context.Users.FirstOrDefaultAsync(u => u.Email == "logistics@resqnet.org");
+            Assert.NotNull(logistics);
+            Assert.Equal("LogisticsManager", logistics.Role);
+            Assert.True(hasher.VerifyPassword("Password@123", logistics.PasswordHash));
+
+            var shelter = await context.Users.FirstOrDefaultAsync(u => u.Email == "shelter@resqnet.org");
+            Assert.NotNull(shelter);
+            Assert.Equal("ShelterAdmin", shelter.Role);
+            Assert.True(hasher.VerifyPassword("Password@123", shelter.PasswordHash));
+
+            var partner = await context.Users.FirstOrDefaultAsync(u => u.Email == "partner@resqnet.org");
+            Assert.NotNull(partner);
+            Assert.Equal("PartnerOfficer", partner.Role);
+            Assert.True(hasher.VerifyPassword("Password@123", partner.PasswordHash));
+        }
     }
 }

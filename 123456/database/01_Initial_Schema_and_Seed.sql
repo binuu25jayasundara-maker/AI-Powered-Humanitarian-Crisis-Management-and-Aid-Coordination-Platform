@@ -160,7 +160,10 @@ USING (VALUES
     ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'CaseManager', 'Assistance case assessment, verification and queue management', 1),
     ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'VolunteerCoordinator', 'Volunteer onboarding, skill profiling and shift scheduling', 1),
     ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'DonorOfficer', 'Fundraising campaigns, monetary gifts and transparency tracking', 1),
-    ('ffffffff-ffff-ffff-ffff-ffffffffffff', 'Citizen', 'Public civilian requesting emergency assistance or viewing alerts', 1)
+    ('ffffffff-ffff-ffff-ffff-ffffffffffff', 'Citizen', 'Public civilian requesting emergency assistance or viewing alerts', 1),
+    ('11111111-2222-3333-4444-555555555555', 'LogisticsManager', 'Resource warehouse and delivery management', 1),
+    ('22222222-3333-4444-5555-666666666666', 'ShelterAdmin', 'Shelter capacity and occupancy administrator', 1),
+    ('33333333-4444-5555-6666-777777777777', 'PartnerOfficer', 'Partner organization coordination and relief aid liaison', 1)
 ) AS source ([Id], [Name], [Description], [IsSystemRole])
 ON target.[Name] = source.[Name]
 WHEN NOT MATCHED THEN
@@ -176,7 +179,10 @@ USING (VALUES
     ('Nadeesha Perera', 'casemanager@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'CaseManager', '11111111-1111-1111-1111-111111111111', '+94 77 345 6789', 1),
     ('Kasun Jayawardena', 'volunteer.coord@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'VolunteerCoordinator', '22222222-2222-2222-2222-222222222222', '+94 77 456 7890', 1),
     ('Anura Fernando', 'donor.officer@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'DonorOfficer', '22222222-2222-2222-2222-222222222222', '+94 77 567 8901', 1),
-    ('Sunil Weerasinghe', 'citizen@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'Citizen', NULL, '+94 77 678 9012', 1)
+    ('Sunil Weerasinghe', 'citizen@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'Citizen', NULL, '+94 77 678 9012', 1),
+    ('Logistics Manager', 'logistics@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'LogisticsManager', '11111111-1111-1111-1111-111111111111', '+94 77 789 0123', 1),
+    ('Shelter Administrator', 'shelter@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'ShelterAdmin', '11111111-1111-1111-1111-111111111111', '+94 77 890 1234', 1),
+    ('Partner Officer', 'partner@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'PartnerOfficer', '22222222-2222-2222-2222-222222222222', '+94 77 901 2345', 1)
 ) AS source ([FullName], [Email], [PasswordHash], [Role], [OrganizationId], [PhoneNumber], [IsActive])
 ON target.[Email] = source.[Email]
 WHEN NOT MATCHED THEN

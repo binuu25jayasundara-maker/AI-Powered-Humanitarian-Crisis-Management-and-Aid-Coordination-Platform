@@ -1,3 +1,5 @@
+using System.Linq;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResQnet.Member6.Application.DTOs;
@@ -18,6 +20,7 @@ public class NotificationsController : ControllerBase
     }
 
     [HttpPost("send")]
+    [Authorize(Roles = "EmergencyCoordinator,CaseManager,VolunteerCoordinator,DonorOfficer,SystemAdmin")]
     public async Task<IActionResult> Send([FromBody] SendNotificationRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Recipient) || string.IsNullOrWhiteSpace(request.Body))
@@ -33,6 +36,25 @@ public class NotificationsController : ControllerBase
     public async Task<IActionResult> GetHistory()
     {
         var history = await _notificationService.GetNotificationHistoryAsync();
-        return Ok(history);
+
+        bool isStaff = User.IsInRole("EmergencyCoordinator")
+            || User.IsInRole("CaseManager")
+            || User.IsInRole("VolunteerCoordinator")
+            || User.IsInRole("DonorOfficer")
+            || User.IsInRole("SystemAdmin");
+
+        if (isStaff)
+        {
+            return Ok(history);
+        }
+
+        var callerEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("email")?.Value;
+        if (string.IsNullOrWhiteSpace(callerEmail))
+        {
+            return Ok(Enumerable.Empty<NotificationRecordDto>());
+        }
+
+        var myHistory = history.Where(n => string.Equals(n.Recipient, callerEmail, StringComparison.OrdinalIgnoreCase));
+        return Ok(myHistory);
     }
 }

@@ -94,5 +94,27 @@ namespace ResQnet.Member5.Tests.IntegrationTests
             var response = await client.GetAsync("/api/shelters");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
+
+        [Fact]
+        public async Task Map_EmergencyRequests_WithCitizen_Returns403Forbidden()
+        {
+            var client = _factory.CreateClient();
+            var token = GenerateJwt("Citizen");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync("/api/map/emergency-requests");
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Map_EmergencyRequests_WithEmergencyCoordinator_Returns200Ok()
+        {
+            var client = _factory.CreateClient();
+            var token = GenerateJwt("EmergencyCoordinator");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync("/api/map/emergency-requests");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace ResQnet.Member6.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "DonorOfficer")]
+[Authorize]
 public class DonationsController : ControllerBase
 {
     private readonly DonationService _donationService;
@@ -18,6 +18,7 @@ public class DonationsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "DonorOfficer")]
     public async Task<IActionResult> GetAll()
     {
         var donations = await _donationService.GetAllDonationsAsync();
@@ -25,6 +26,7 @@ public class DonationsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "DonorOfficer,DonorAndVolunteer")]
     public async Task<IActionResult> Record([FromBody] CreateDonationDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.DonorName))

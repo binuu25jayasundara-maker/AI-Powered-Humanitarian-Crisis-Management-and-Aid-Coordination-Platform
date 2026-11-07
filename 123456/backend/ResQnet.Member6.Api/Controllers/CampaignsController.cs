@@ -7,7 +7,7 @@ namespace ResQnet.Member6.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "DonorOfficer")]
+[Authorize]
 public class CampaignsController : ControllerBase
 {
     private readonly CampaignService _campaignService;
@@ -18,6 +18,7 @@ public class CampaignsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "DonorOfficer,DonorAndVolunteer")]
     public async Task<IActionResult> GetAll()
     {
         var campaigns = await _campaignService.GetAllCampaignsAsync();
@@ -25,6 +26,7 @@ public class CampaignsController : ControllerBase
     }
 
     [HttpGet("kpis")]
+    [Authorize(Roles = "DonorOfficer,DonorAndVolunteer")]
     public async Task<IActionResult> GetKpis()
     {
         var kpis = await _campaignService.GetCampaignKpisAsync();
@@ -32,6 +34,7 @@ public class CampaignsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "DonorOfficer,DonorAndVolunteer")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var campaign = await _campaignService.GetCampaignByIdAsync(id);
@@ -40,6 +43,7 @@ public class CampaignsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "DonorOfficer")]
     public async Task<IActionResult> Create([FromBody] CreateCampaignDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Title) || dto.GoalAmount <= 0)

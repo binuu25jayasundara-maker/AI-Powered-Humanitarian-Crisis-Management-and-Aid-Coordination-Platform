@@ -169,7 +169,7 @@ export const App: React.FC = () => {
             <Route path="/campaigns" element={<DonorsCampaignsPage />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={['DonorAndVolunteer', 'Volunteer', 'VolunteerCoordinator', 'SystemAdmin']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['Volunteer', 'VolunteerCoordinator', 'SystemAdmin']} />}>
             <Route path="/volunteers" element={<VolunteerManagementPage />} />
             <Route path="/communications" element={<CommunicationCenterPage />} />
           </Route>

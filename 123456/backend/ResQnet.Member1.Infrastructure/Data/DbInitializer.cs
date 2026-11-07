@@ -58,6 +58,7 @@ namespace ResQnet.Member1.Infrastructure.Data
                 new Role { Id = Guid.NewGuid(), Name = "DonorAndVolunteer", Description = "Public donor and volunteer supporting humanitarian aid and emergency response" },
                 new Role { Id = Guid.NewGuid(), Name = "LogisticsManager", Description = "Resource warehouse and delivery management" },
                 new Role { Id = Guid.NewGuid(), Name = "ShelterAdmin", Description = "Shelter capacity and occupancy administrator" },
+                new Role { Id = Guid.NewGuid(), Name = "PartnerOfficer", Description = "Partner organization coordination and relief aid liaison" },
                 new Role { Id = Guid.NewGuid(), Name = "Citizen", Description = "Public user requesting aid or tracking requests" }
             };
 
@@ -132,6 +133,39 @@ namespace ResQnet.Member1.Infrastructure.Data
                     Role = "Citizen",
                     IsActive = true,
                     PhoneNumber = "+94 77 678 9012"
+                },
+                new User
+                {
+                    Id = Guid.NewGuid(),
+                    FullName = "Logistics Manager",
+                    Email = "logistics@resqnet.org",
+                    PasswordHash = defaultPasswordHash,
+                    Role = "LogisticsManager",
+                    OrganizationId = dmc.Id,
+                    IsActive = true,
+                    PhoneNumber = "+94 77 789 0123"
+                },
+                new User
+                {
+                    Id = Guid.NewGuid(),
+                    FullName = "Shelter Administrator",
+                    Email = "shelter@resqnet.org",
+                    PasswordHash = defaultPasswordHash,
+                    Role = "ShelterAdmin",
+                    OrganizationId = dmc.Id,
+                    IsActive = true,
+                    PhoneNumber = "+94 77 890 1234"
+                },
+                new User
+                {
+                    Id = Guid.NewGuid(),
+                    FullName = "Partner Officer",
+                    Email = "partner@resqnet.org",
+                    PasswordHash = defaultPasswordHash,
+                    Role = "PartnerOfficer",
+                    OrganizationId = slrc.Id,
+                    IsActive = true,
+                    PhoneNumber = "+94 77 901 2345"
                 }
             };
 

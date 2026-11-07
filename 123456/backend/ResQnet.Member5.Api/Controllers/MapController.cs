@@ -28,6 +28,7 @@ namespace ResQnet.Member5.Api.Controllers
         }
 
         [HttpGet("emergency-requests")]
+        [Authorize(Roles = "EmergencyCoordinator,CaseManager,LogisticsManager,VolunteerCoordinator")]
         public async Task<ActionResult<List<EmergencyRequestDto>>> GetEmergencies()
         {
             var emergencies = await _mapService.GetMapEmergenciesAsync();

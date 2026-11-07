@@ -89,8 +89,6 @@ export const Sidebar: React.FC = () => {
         return [
           { name: 'Donor & Volunteer Dashboard', path: '/dashboard/donor-volunteer', icon: DollarSign },
           { name: 'Donate & Volunteer', path: '/dashboard/donor-volunteer', icon: HeartHandshake },
-          { name: 'Volunteer Roster & Tasks', path: '/volunteers', icon: Users },
-          { name: 'Communication Center', path: '/communications', icon: MessageSquare },
           { name: 'Relief Campaigns', path: '/campaigns', icon: BookOpen },
           { name: 'Map & Shelters', path: '/citizen/shelters', icon: MapPin },
           { name: 'Emergency Distress Hub', path: '/emergency-help', icon: AlertTriangle }
