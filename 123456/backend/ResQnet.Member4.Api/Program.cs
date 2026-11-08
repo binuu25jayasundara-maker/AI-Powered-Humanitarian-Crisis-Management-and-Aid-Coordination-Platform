@@ -29,7 +29,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 // 2. HTTP Client for External AI
-builder.Services.AddHttpClient<ExternalLlmAiStrategy>();
+var aiTimeoutSeconds = builder.Configuration.GetValue<int?>("AI:TimeoutSeconds") ?? 4;
+builder.Services.AddHttpClient<ExternalLlmAiStrategy>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(aiTimeoutSeconds);
+});
 
 // 3. Register Strategy Pattern implementations
 builder.Services.AddSingleton<RuleBasedAiStrategy>();
@@ -38,6 +42,7 @@ builder.Services.AddTransient<IAiProcessingStrategy, ExternalLlmAiStrategy>();
 
 // 4. Register Services & AI Gateway
 builder.Services.AddScoped<IAiGateway, AiGateway>();
+builder.Services.AddScoped<IDuplicateService, DuplicateService>();
 builder.Services.AddScoped<ICaseReviewService, CaseReviewService>();
 builder.Services.AddScoped<IAiAssistantService, AiAssistantService>();
 builder.Services.AddScoped<IForecastingService, ForecastingService>();

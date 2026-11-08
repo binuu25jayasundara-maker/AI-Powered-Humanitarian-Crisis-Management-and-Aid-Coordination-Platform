@@ -99,5 +99,59 @@ namespace ResQnet.Member4.Tests.IntegrationTests
             var response = await client.PostAsJsonAsync("/api/ai/chat", new { Question = "Where is the shelter?", CaseNumber = "#2341", Language = "en" });
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
+
+        [Fact]
+        public async Task CreateCase_WithAuthorizedRole_Returns201Created()
+        {
+            var client = _factory.CreateClient();
+            var token = GenerateJwt("EmergencyCoordinator");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.PostAsJsonAsync("/api/cases", new CreateCaseRequest
+            {
+                Description = "Severe flash flooding in downstream village requiring immediate evacuation",
+                Location = "Ratnapura",
+                Category = "Disaster Relief"
+            });
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreateCase_WithUnauthorizedRole_Returns403Forbidden()
+        {
+            var client = _factory.CreateClient();
+            var token = GenerateJwt("Citizen");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.PostAsJsonAsync("/api/cases", new CreateCaseRequest
+            {
+                Description = "Severe flash flooding in downstream village requiring immediate evacuation",
+                Location = "Ratnapura",
+                Category = "Disaster Relief"
+            });
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task OverrideRate_WithAuthorizedRole_Returns200Ok()
+        {
+            var client = _factory.CreateClient();
+            var token = GenerateJwt("SystemAdmin");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync("/api/ai/metrics/override-rate");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task OverrideRate_WithUnauthorizedRole_Returns403Forbidden()
+        {
+            var client = _factory.CreateClient();
+            var token = GenerateJwt("Citizen");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync("/api/ai/metrics/override-rate");
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
     }
 }

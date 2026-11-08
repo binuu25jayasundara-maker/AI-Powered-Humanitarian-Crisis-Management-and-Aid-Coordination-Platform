@@ -69,6 +69,30 @@ namespace ResQnet.Member4.Application.DTOs
         public string Rationale { get; set; } = string.Empty;
     }
 
+    public class CreateCaseRequest
+    {
+        public string Description { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+    }
+
+    public class OverrideMetricsDto
+    {
+        public int TotalDecisions { get; set; }
+        public int ModifiedOrRejectedCount { get; set; }
+        public decimal OverridePercentage { get; set; }
+        public int DeferredDecisions { get; set; }
+        public Dictionary<string, CategoryOverrideMetricsDto> ByCategory { get; set; } = new();
+    }
+
+    public class CategoryOverrideMetricsDto
+    {
+        public int TotalDecisions { get; set; }
+        public int ModifiedOrRejectedCount { get; set; }
+        public decimal OverridePercentage { get; set; }
+        public int DeferredDecisions { get; set; }
+    }
+
     public class DemandForecastDto
     {
         public Guid Id { get; set; }

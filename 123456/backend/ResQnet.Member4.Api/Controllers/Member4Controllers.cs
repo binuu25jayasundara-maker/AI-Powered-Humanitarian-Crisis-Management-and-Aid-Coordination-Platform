@@ -67,6 +67,47 @@ namespace ResQnet.Member4.Api.Controllers
             }
             return Ok(ApiResponse<bool>.Ok(true, $"Case {caseNumber} human decision recorded successfully ({request.Action})."));
         }
+
+        [HttpPost]
+        public async Task<ActionResult<ApiResponse<AiRecommendationDto>>> CreateCase([FromBody] CreateCaseRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest(ApiResponse<AiRecommendationDto>.Fail("Request payload is required."));
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Description) || request.Description.Trim().Length < 10 || request.Description.Trim().Length > 1000)
+            {
+                return BadRequest(ApiResponse<AiRecommendationDto>.Fail("Description is required and must be between 10 and 1000 characters."));
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Location))
+            {
+                return BadRequest(ApiResponse<AiRecommendationDto>.Fail("Location is required."));
+            }
+
+            var allowedCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "Disaster Relief",
+                "Emergency Medical",
+                "Shelter",
+                "Food & Water",
+                "Search & Rescue",
+                "Medical & Evacuation"
+            };
+
+            if (string.IsNullOrWhiteSpace(request.Category) || !allowedCategories.Contains(request.Category.Trim()))
+            {
+                return BadRequest(ApiResponse<AiRecommendationDto>.Fail($"Invalid category. Allowed categories are: {string.Join(", ", allowedCategories)}."));
+            }
+
+            var (caseNumber, recommendation) = await _caseService.CreateCaseAsync(request);
+
+            return CreatedAtAction(
+                nameof(GetByCaseNumber),
+                new { caseNumber = caseNumber },
+                ApiResponse<AiRecommendationDto>.Ok(recommendation, $"Case {caseNumber} created successfully."));
+        }
     }
 
     [ApiController]
@@ -116,6 +157,15 @@ namespace ResQnet.Member4.Api.Controllers
         {
             var result = await _aiGateway.CheckDuplicateAsync(request.NewText, request.ExistingText, request.ExistingCaseNumber);
             return Ok(ApiResponse<DuplicateCheckResult?>.Ok(result));
+        }
+
+        // Override metrics — EmergencyCoordinator, CaseManager, SystemAdmin
+        [HttpGet("metrics/override-rate")]
+        [Authorize(Roles = "EmergencyCoordinator,CaseManager,SystemAdmin")]
+        public async Task<ActionResult<ApiResponse<OverrideMetricsDto>>> GetOverrideMetrics([FromServices] ICaseReviewService caseReviewService)
+        {
+            var metrics = await caseReviewService.GetOverrideMetricsAsync();
+            return Ok(ApiResponse<OverrideMetricsDto>.Ok(metrics));
         }
     }
 

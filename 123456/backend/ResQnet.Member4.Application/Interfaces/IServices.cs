@@ -18,6 +18,18 @@ namespace ResQnet.Member4.Application.Interfaces
         Task<IReadOnlyList<CaseReviewDto>> GetAllCasesAsync(CancellationToken cancellationToken = default);
         Task<CaseReviewDto?> GetCaseByNumberAsync(string caseNumber, CancellationToken cancellationToken = default);
         Task<bool> SubmitHumanDecisionAsync(string caseNumber, HumanDecisionRequest decision, CancellationToken cancellationToken = default);
+        Task<(string CaseNumber, AiRecommendationDto Recommendation)> CreateCaseAsync(CreateCaseRequest request, CancellationToken cancellationToken = default);
+        Task<OverrideMetricsDto> GetOverrideMetricsAsync(CancellationToken cancellationToken = default);
+    }
+
+    public interface IDuplicateService
+    {
+        Task<DuplicateCheckResult?> CheckDuplicateAgainstCasesAsync(
+            string requestDetails,
+            string location,
+            DateTime createdAt,
+            string? excludeCaseNumber = null,
+            CancellationToken cancellationToken = default);
     }
 
     public interface IAiAssistantService

@@ -18,6 +18,27 @@ namespace ResQnet.Member4.Application.Strategies
     {
         public string StrategyName => "RuleBasedStrategy (Deterministic Fallback)";
 
+        private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "the", "and", "for", "of", "in", "a", "to", "is", "are", "at", "on", "near", "need", "help"
+        };
+
+        public static HashSet<string> TokenizeAndNormalize(string text)
+        {
+            var delimiters = new[] { ' ', ',', '.', ';', ':', '!', '?', '-', '_', '/', '\\', '(', ')', '[', ']', '{', '}', '"', '\'', '`', '\n', '\r', '\t' };
+            var words = text.ToLowerInvariant().Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+            var tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var w in words)
+            {
+                var trimmed = w.Trim();
+                if (trimmed.Length > 0 && !StopWords.Contains(trimmed))
+                {
+                    tokens.Add(trimmed);
+                }
+            }
+            return tokens;
+        }
+
         public Task<AiRecommendationDto> GenerateRecommendationAsync(string requestDetails, string location, string evidence)
         {
             var text = $"{requestDetails} {evidence}".ToLowerInvariant();
@@ -27,7 +48,6 @@ namespace ResQnet.Member4.Application.Strategies
             string view = "Provide shelter, food supplies, medical aid.";
             string suggest = "Coordinate with local authorities and NGOs.";
             int score = 88;
-            decimal confidence = 0.94m;
             var rationaleTokens = new List<string>();
 
             // Category detection matching Screenshot 11
@@ -62,7 +82,35 @@ namespace ResQnet.Member4.Application.Strategies
                 rationaleTokens.Add("life-safety critical urgency trigger fired");
             }
 
-            string rationale = $"NLP multi-factor scoring classified as '{category}' based on compound factors. Urgency '{urgency}' with priority index {score}/100. Key rationale: {string.Join(", ", rationaleTokens.DefaultIfEmpty("Compound disaster relief profile verified."))}";
+            // Dynamic confidence calculation: clamped between 0.40 and 0.95
+            var matchedKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var categoryKeywords = new[] { "shelter", "food", "disaster relief", "flood", "tent", "roof", "displaced", "medical", "doctor", "injured", "medicine", "water", "rations" };
+            var urgencyKeywords = new[] { "trapped", "rising", "drowning", "immediate", "urgent", "critical", "emergency" };
+
+            decimal calculatedConfidence = 0.40m; // Base confidence
+
+            foreach (var kw in categoryKeywords)
+            {
+                if (text.Contains(kw))
+                {
+                    matchedKeywords.Add(kw);
+                    calculatedConfidence += 0.14m; // Strong category match
+                }
+            }
+
+            foreach (var kw in urgencyKeywords)
+            {
+                if (text.Contains(kw))
+                {
+                    matchedKeywords.Add(kw);
+                    calculatedConfidence += 0.12m; // Urgency match
+                }
+            }
+
+            decimal confidence = Math.Clamp(calculatedConfidence, 0.40m, 0.95m);
+
+            string matchedSummary = matchedKeywords.Count > 0 ? string.Join(", ", matchedKeywords) : "none";
+            string rationale = $"NLP multi-factor scoring classified as '{category}' based on compound factors. Urgency '{urgency}' with priority index {score}/100. Matched keywords: [{matchedSummary}]. Key rationale: {string.Join(", ", rationaleTokens.DefaultIfEmpty("Compound disaster relief profile verified."))}";
 
             var result = new AiRecommendationDto
             {
@@ -152,23 +200,26 @@ namespace ResQnet.Member4.Application.Strategies
 
         public Task<DuplicateCheckResult?> CheckDuplicateAsync(string newText, string existingText, string existingCaseNum)
         {
-            var tokens1 = new HashSet<string>(newText.ToLower().Split(new[] { ' ', ',', '.', '-', '\n' }, StringSplitOptions.RemoveEmptyEntries));
-            var tokens2 = new HashSet<string>(existingText.ToLower().Split(new[] { ' ', ',', '.', '-', '\n' }, StringSplitOptions.RemoveEmptyEntries));
+            var tokens1 = TokenizeAndNormalize(newText);
+            var tokens2 = TokenizeAndNormalize(existingText);
 
             int intersection = tokens1.Count(t => tokens2.Contains(t));
             int union = tokens1.Union(tokens2).Count();
 
-            decimal similarity = union == 0 ? 0 : (decimal)intersection / union;
+            decimal similarity = union == 0 ? 0m : Math.Round((decimal)intersection / union, 2);
 
-            if (similarity > 0.40m || (newText.Contains("kandy", StringComparison.OrdinalIgnoreCase) && existingText.Contains("kandy", StringComparison.OrdinalIgnoreCase)))
+            if (similarity >= 0.25m)
             {
+                string riskLevel = similarity >= 0.70m ? "High" : similarity >= 0.45m ? "Medium" : "Low";
+                var overlappingWords = tokens1.Intersect(tokens2);
+
                 return Task.FromResult<DuplicateCheckResult?>(new DuplicateCheckResult
                 {
-                    CaseNumber = "#2341",
+                    CaseNumber = string.Empty,
                     SuspectedDuplicate = existingCaseNum,
-                    SimilarityScore = 0.74m,
-                    RiskLevel = "Medium",
-                    Rationale = $"High semantic and geographical overlap with {existingCaseNum}. Both cases request food and shelter aid within Kandy flood operational sector."
+                    SimilarityScore = similarity,
+                    RiskLevel = riskLevel,
+                    Rationale = $"Token overlap similarity score is {similarity:P0} with {existingCaseNum}. Overlapping keywords: {string.Join(", ", overlappingWords)}."
                 });
             }
 
