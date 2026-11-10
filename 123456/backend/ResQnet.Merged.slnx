@@ -16,4 +16,6 @@
   <Project Path="ResQnet.Member6.Domain/ResQnet.Member6.Domain.csproj" />
   <Project Path="ResQnet.Member6.Infrastructure/ResQnet.Member6.Infrastructure.csproj" />
   <Project Path="ResQnet.Member6.Tests/ResQnet.Member6.Tests.csproj" />
+  <Project Path="ResQnet.UnifiedApi/ResQnet.UnifiedApi.csproj" />
+  <Project Path="ResQnet.UnifiedApi.Tests/ResQnet.UnifiedApi.Tests.csproj" />
 </Solution>
