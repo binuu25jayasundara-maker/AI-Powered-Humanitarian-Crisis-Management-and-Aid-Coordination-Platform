@@ -37,20 +37,33 @@ export const CoordinatorDashboard: React.FC = () => {
   const [resources, setResources] = useState<ResourceStock[]>([]);
   const [log, setLog] = useState<AIDecisionLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const isOffline = coordinationApi.isOffline();
+
+  const loadData = () => {
+    setLoading(true);
+    setError(null);
     Promise.all([
       coordinationApi.getCases(),
       coordinationApi.getShelters(),
       coordinationApi.getResources(),
       coordinationApi.getDecisionLog()
-    ]).then(([c, s, r, l]) => {
-      setCases(c);
-      setShelters(s);
-      setResources(r);
-      setLog(l);
-      setLoading(false);
-    });
+    ])
+      .then(([c, s, r, l]) => {
+        setCases(c);
+        setShelters(s);
+        setResources(r);
+        setLog(l);
+      })
+      .catch((err: any) => {
+        setError(err.message || 'Failed to load dashboard data');
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
 
   const metrics = useMemo(() => computeCaseMetrics(cases), [cases]);
@@ -84,8 +97,45 @@ export const CoordinatorDashboard: React.FC = () => {
     return <div className="co-page"><EmptyState title="Loading coordinator dashboard..." /></div>;
   }
 
+  if (error) {
+    const isAuth = error.toLowerCase().includes('log in') || error.toLowerCase().includes('authentication') || error.includes('401');
+    return (
+      <div className="co-page">
+        <Panel>
+          <EmptyState title="Could not load dashboard data" message={error} />
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            {isAuth ? (
+              <button className="co-btn co-btn-blue" onClick={() => navigate('/login')}>Go to Login</button>
+            ) : (
+              <button className="co-btn co-btn-blue" onClick={loadData}>Try again</button>
+            )}
+          </div>
+        </Panel>
+      </div>
+    );
+  }
+
   return (
     <div className="co-page">
+      {isOffline && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 16px',
+          backgroundColor: 'var(--color-amber-soft)',
+          border: '1px solid var(--color-amber-dark)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--color-amber-dark)',
+          marginBottom: '16px',
+          fontWeight: 600,
+          fontSize: '14px'
+        }}>
+          <AlertTriangle size={18} />
+          <span>Offline: showing demo data (Core API unreachable)</span>
+        </div>
+      )}
+
       <PageHeader
         badges={
           <>

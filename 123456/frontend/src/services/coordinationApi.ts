@@ -20,6 +20,131 @@ import {
   Shelter,
   Urgency
 } from '../types/coordination';
+import { CORE_API_URL } from '../config';
+
+export class CoreCoordApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'CoreCoordApiError';
+    this.status = status;
+  }
+}
+
+let _isCoordOffline = false;
+export const isCoordinationOffline = () => _isCoordOffline;
+
+async function requestCoordCore<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = localStorage.getItem('resqnet_token');
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 3500);
+  try {
+    const res = await fetch(`${CORE_API_URL}${path}`, {
+      ...init,
+      signal: ctrl.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(init?.headers || {})
+      }
+    });
+
+    if (res.status === 401) {
+      _isCoordOffline = false;
+      throw new CoreCoordApiError('Authentication required. Please log in again.', 401);
+    }
+    if (res.status === 403) {
+      _isCoordOffline = false;
+      throw new CoreCoordApiError('Access denied. You do not have permission to view or manage these requests.', 403);
+    }
+
+    let json: any = null;
+    try {
+      json = await res.json();
+    } catch {
+      // no json
+    }
+
+    if (res.status === 400) {
+      _isCoordOffline = false;
+      const errMsg = Array.isArray(json?.errors) && json.errors.length > 0
+        ? json.errors.join(', ')
+        : (json?.message || 'Validation failed.');
+      throw new CoreCoordApiError(errMsg, 400);
+    }
+
+    if (res.status >= 500) {
+      _isCoordOffline = false;
+      throw new CoreCoordApiError(json?.message || `Server error (${res.status}). Please try again later.`, res.status);
+    }
+
+    if (!res.ok) {
+      _isCoordOffline = false;
+      throw new CoreCoordApiError(json?.message || `Request failed with status ${res.status}`, res.status);
+    }
+
+    _isCoordOffline = false;
+    return (json?.data !== undefined ? json.data : json) as T;
+  } catch (err) {
+    if (err instanceof CoreCoordApiError) {
+      throw err;
+    }
+    _isCoordOffline = true;
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const mapDtoToCrisisCase = (dto: any): CrisisCase => {
+  const needMap: Record<string, NeedType> = {
+    'Food & Water': 'Food',
+    'Medical': 'Medical',
+    'Shelter': 'Shelter',
+    'Rescue / Evacuation': 'Rescue',
+    'Other': 'Food'
+  };
+  const timeline: CaseTimelineEntry[] = (dto.history || []).map((h: any) => ({
+    id: h.id,
+    at: h.timestamp,
+    actor: h.changedByEmail || 'Staff',
+    action: `Status: ${h.oldStatus ? `${h.oldStatus} → ${h.newStatus}` : h.newStatus}`,
+    note: h.note || undefined
+  }));
+
+  return {
+    id: dto.id,
+    ref: dto.reference,
+    title: `${dto.category} Request - ${dto.location}`,
+    description: dto.description,
+    reporter: dto.contactPhone || 'Citizen',
+    contact: dto.contactPhone || 'N/A',
+    location: dto.location,
+    district: dto.location.includes(',') ? dto.location.split(',').pop()!.trim() : 'Western',
+    needType: needMap[dto.category] || 'Food',
+    urgency: (dto.urgency as Urgency) || 'Medium',
+    status: dto.status as CaseStatus,
+    createdAt: dto.createdAt,
+    dueAt: new Date(new Date(dto.createdAt).getTime() + 24 * 60 * 60000).toISOString(),
+    assignedTo: dto.status === 'Assigned' || dto.status === 'In Progress' ? 'Assigned Team' : null,
+    peopleAffected: dto.householdSize || 1,
+    evidence: dto.evidenceName
+      ? [{ id: `ev-${dto.id}`, type: 'Document', label: dto.evidenceName, addedAt: dto.createdAt }]
+      : [],
+    duplicateOfId: null,
+    timeline,
+    ai: {
+      suggestedUrgency: (dto.urgency as Urgency) || 'Medium',
+      confidence: 0.88,
+      recommendedAction: `Process ${dto.category} aid request`,
+      rationale: ['Matched category and location indicators'],
+      fallback: false,
+      modelVersion: 'triage-model-2.4'
+    },
+    firstResponseMinutes: timeline.length > 1 ? 15 : null,
+    eventId: ''
+  };
+};
 
 /**
  * Coordination & Governance service.
@@ -73,15 +198,17 @@ export const URGENCY_ORDER: Urgency[] = ['Critical', 'High', 'Medium', 'Low'];
 export const NEED_TYPES: NeedType[] = ['Medical', 'Food', 'Water', 'Shelter', 'Rescue', 'Sanitation', 'Evacuation'];
 export const LOW_CONFIDENCE_THRESHOLD = 0.7;
 
-export const isOverdue = (c: CrisisCase): boolean =>
-  c.status !== 'Resolved' && new Date(c.dueAt).getTime() < Date.now();
+export const isActive = (c: CrisisCase): boolean =>
+  !['Fulfilled', 'Closed', 'Rejected', 'Resolved'].includes(c.status);
 
-export const isActive = (c: CrisisCase): boolean => c.status !== 'Resolved';
+export const isOverdue = (c: CrisisCase): boolean =>
+  isActive(c) && !!c.dueAt && new Date(c.dueAt).getTime() < Date.now();
 
 const URGENCY_WEIGHT: Record<Urgency, number> = { Critical: 100, High: 70, Medium: 40, Low: 15 };
 
 export const priorityScore = (c: CrisisCase): number => {
-  let score = URGENCY_WEIGHT[c.urgency];
+  let score = URGENCY_WEIGHT[c.urgency] || 40;
+  if (c.status === 'Prioritised') score += 30;
   if (c.status === 'Escalated') score += 25;
   if (c.status === 'Unresolved') score += 15;
   if (isOverdue(c)) score += 20;
@@ -516,13 +643,53 @@ const patchCase = (
 };
 
 export const coordinationApi = {
+  isOffline(): boolean {
+    return _isCoordOffline;
+  },
+
   // ---------- Cases ----------
   async getCases(): Promise<CrisisCase[]> {
-    return loadCases();
+    try {
+      const dtos = await requestCoordCore<any[]>('/requests');
+      return dtos.map(mapDtoToCrisisCase);
+    } catch (err) {
+      if (err instanceof CoreCoordApiError) {
+        throw err;
+      }
+      return loadCases();
+    }
   },
 
   async getCase(id: string): Promise<CrisisCase | null> {
-    return loadCases().find((c) => c.id === id) || null;
+    try {
+      const dto = await requestCoordCore<any>(`/requests/${id}`);
+      return mapDtoToCrisisCase(dto);
+    } catch (err) {
+      if (err instanceof CoreCoordApiError) {
+        throw err;
+      }
+      return loadCases().find((c) => c.id === id) || null;
+    }
+  },
+
+  async updateRequestStatus(id: string, newStatus: string, note?: string): Promise<CrisisCase> {
+    try {
+      const dto = await requestCoordCore<any>(`/requests/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ newStatus, note: note || undefined })
+      });
+      return mapDtoToCrisisCase(dto);
+    } catch (err) {
+      if (err instanceof CoreCoordApiError) {
+        throw err;
+      }
+      // Offline fallback: update local case
+      return patchCase(
+        id,
+        (c) => { c.status = newStatus as CaseStatus; },
+        { actor: 'Coordinator', action: `Status changed to ${newStatus}`, note }
+      );
+    }
   },
 
   async assignCase(id: string, assignee: string, actor: string): Promise<CrisisCase> {
@@ -585,7 +752,15 @@ export const coordinationApi = {
 
   // ---------- Crisis events ----------
   async getEvents(): Promise<CrisisEvent[]> {
-    return getStored<CrisisEvent[]>(KEYS.EVENTS, seedEvents);
+    try {
+      const dtos = await requestCoordCore<CrisisEvent[]>('/events');
+      return dtos;
+    } catch (err) {
+      if (err instanceof CoreCoordApiError) {
+        throw err;
+      }
+      return getStored<CrisisEvent[]>(KEYS.EVENTS, seedEvents);
+    }
   },
 
   async createEvent(input: {
@@ -595,33 +770,66 @@ export const coordinationApi = {
     description: string;
     startedAt: string;
   }): Promise<CrisisEvent> {
-    const events = getStored<CrisisEvent[]>(KEYS.EVENTS, seedEvents);
-    const event: CrisisEvent = { id: uid('ev'), status: 'Planned', areas: [], ...input };
-    events.unshift(event);
-    setStored(KEYS.EVENTS, events);
-    return event;
+    try {
+      const created = await requestCoordCore<CrisisEvent>('/events', {
+        method: 'POST',
+        body: JSON.stringify(input)
+      });
+      return created;
+    } catch (err) {
+      if (err instanceof CoreCoordApiError) {
+        throw err;
+      }
+      const events = getStored<CrisisEvent[]>(KEYS.EVENTS, seedEvents);
+      const event: CrisisEvent = { id: uid('ev'), status: 'Planned', areas: [], ...input };
+      events.unshift(event);
+      setStored(KEYS.EVENTS, events);
+      return event;
+    }
   },
 
   async setEventStatus(eventId: string, status: EventStatus): Promise<CrisisEvent[]> {
-    const events = getStored<CrisisEvent[]>(KEYS.EVENTS, seedEvents);
-    const ev = events.find((e) => e.id === eventId);
-    if (ev) ev.status = status;
-    setStored(KEYS.EVENTS, events);
-    return events;
+    try {
+      await requestCoordCore<any>(`/events/${eventId}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+      });
+      return await this.getEvents();
+    } catch (err) {
+      if (err instanceof CoreCoordApiError) {
+        throw err;
+      }
+      const events = getStored<CrisisEvent[]>(KEYS.EVENTS, seedEvents);
+      const ev = events.find((e) => e.id === eventId);
+      if (ev) ev.status = status;
+      setStored(KEYS.EVENTS, events);
+      return events;
+    }
   },
 
   async addOperationalArea(
     eventId: string,
     area: { name: string; district: string; populationAtRisk: number; status: AreaStatus }
   ): Promise<CrisisEvent[]> {
-    const events = getStored<CrisisEvent[]>(KEYS.EVENTS, seedEvents);
-    const ev = events.find((e) => e.id === eventId);
-    if (ev) {
-      const newArea: OperationalArea = { id: uid('ar'), ...area };
-      ev.areas.push(newArea);
+    try {
+      await requestCoordCore<any>(`/events/${eventId}/areas`, {
+        method: 'POST',
+        body: JSON.stringify(area)
+      });
+      return await this.getEvents();
+    } catch (err) {
+      if (err instanceof CoreCoordApiError) {
+        throw err;
+      }
+      const events = getStored<CrisisEvent[]>(KEYS.EVENTS, seedEvents);
+      const ev = events.find((e) => e.id === eventId);
+      if (ev) {
+        const newArea: OperationalArea = { id: uid('ar'), ...area };
+        ev.areas.push(newArea);
+      }
+      setStored(KEYS.EVENTS, events);
+      return events;
     }
-    setStored(KEYS.EVENTS, events);
-    return events;
   },
 
   // ---------- Partners ----------
@@ -763,6 +971,17 @@ export const computeOverrideStats = (log: AIDecisionLogEntry[]) => {
 };
 
 export const computeCaseMetrics = (cases: CrisisCase[]) => {
+  const openStatuses = ['Submitted', 'Under Review', 'Needs Information', 'Verified', 'Prioritised', 'Open'];
+  const inProgressStatuses = ['Assigned', 'In Progress'];
+  const resolvedStatuses = ['Fulfilled', 'Closed', 'Resolved'];
+
+  const open = cases.filter((c) => openStatuses.includes(c.status)).length;
+  const inProgress = cases.filter((c) => inProgressStatuses.includes(c.status)).length;
+  const resolved = cases.filter((c) => resolvedStatuses.includes(c.status)).length;
+  const rejected = cases.filter((c) => c.status === 'Rejected').length;
+  const escalated = cases.filter((c) => c.status === 'Escalated').length;
+  const unresolved = cases.filter((c) => c.status === 'Unresolved').length;
+
   const active = cases.filter(isActive);
   const responded = cases.filter((c) => c.firstResponseMinutes !== null);
   const avgResponse =
@@ -771,10 +990,12 @@ export const computeCaseMetrics = (cases: CrisisCase[]) => {
       : responded.reduce((sum, c) => sum + (c.firstResponseMinutes || 0), 0) / responded.length;
   return {
     total: cases.length,
-    open: cases.filter((c) => c.status === 'Open' || c.status === 'In Progress').length,
-    escalated: cases.filter((c) => c.status === 'Escalated').length,
-    unresolved: cases.filter((c) => c.status === 'Unresolved').length,
-    resolved: cases.filter((c) => c.status === 'Resolved').length,
+    open,
+    inProgress,
+    resolved,
+    rejected,
+    escalated,
+    unresolved,
     overdue: active.filter(isOverdue).length,
     avgResponse
   };

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FastForward, Star } from 'lucide-react';
+import { AlertTriangle, FastForward, Star } from 'lucide-react';
 import { citizenApi } from '../../services/citizenApi';
-import { EmptyState, ErrorBox, Loading, PageHeader, Stepper, Toast, formatDate, useAsync } from '../../components/citizen/ui';
+import { EmptyState, Loading, PageHeader, Stepper, Toast, formatDate, useAsync } from '../../components/citizen/ui';
 
 export const TrackerPage: React.FC = () => {
   const { data, setData, loading, error, reload } = useAsync(() => citizenApi.getRequests());
@@ -14,8 +14,29 @@ export const TrackerPage: React.FC = () => {
   const notify = (m: string) => { setToast(m); setTimeout(() => setToast(null), 2500); };
 
   if (loading) return <Loading />;
-  if (error || !data) return <ErrorBox message={error ?? 'Could not load requests'} onRetry={reload} />;
+  if (error || !data) {
+    const isAuth = error?.toLowerCase().includes('log in') || error?.toLowerCase().includes('authentication') || error?.includes('401');
+    return (
+      <div className="cz-page">
+        <PageHeader title="My Requests" subtitle="Follow the progress of your help requests." />
+        <div className="cz-state">
+          <AlertTriangle size={28} color="var(--color-error)" />
+          <div style={{ margin: '8px 0 12px' }}>{error ?? 'Could not load requests'}</div>
+          {isAuth ? (
+            <Link to="/login" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>
+              Log in again
+            </Link>
+          ) : (
+            <button type="button" className="btn-secondary" onClick={reload}>
+              Try again
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
+  const isOffline = citizenApi.isOffline();
   const selected = data.find((r) => r.id === selectedId) ?? data[0];
 
   const advance = async () => { if (selected) setData(await citizenApi.advanceRequest(selected.id).then(() => citizenApi.getRequests())); };
@@ -30,6 +51,17 @@ export const TrackerPage: React.FC = () => {
   return (
     <div className="cz-page">
       <PageHeader title="My Requests" subtitle="Follow the progress of your help requests." />
+
+      {isOffline && (
+        <div className="cz-banner cz-banner-Warning" style={{ marginBottom: 16 }}>
+          <AlertTriangle size={20} />
+          <div>
+            <h3>Offline: showing demo data</h3>
+            <p>Could not reach the Core API. Showing cached local or demo data.</p>
+          </div>
+        </div>
+      )}
+
       {data.length === 0 ? (
         <div className="card"><EmptyState title="No requests yet" text="When you ask for help, it will appear here." /><div style={{ textAlign: 'center' }}><Link to="/citizen/request" className="btn-primary" style={{ textDecoration: 'none' }}>Request help</Link></div></div>
       ) : (
@@ -54,10 +86,37 @@ export const TrackerPage: React.FC = () => {
               <Stepper status={selected.status} />
               {selected.etaMinutes && <p className="cz-muted">Estimated arrival: about {selected.etaMinutes} minutes</p>}
 
-              {selected.status !== 'Delivered' && (
+              {isOffline && selected.status !== 'Delivered' && (
                 <button type="button" className="btn-secondary" style={{ marginTop: 12 }} onClick={advance}>
                   <FastForward size={16} /> Demo: move to next step
                 </button>
+              )}
+
+              {selected.history && selected.history.length > 0 && (
+                <div style={{ marginTop: 16, borderTop: '1px solid var(--color-border)', paddingTop: 16 }}>
+                  <h3 className="cz-h2" style={{ fontSize: 15, marginBottom: 8 }}>Status History</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {selected.history.map((h) => (
+                      <div
+                        key={h.id}
+                        style={{
+                          fontSize: 13,
+                          padding: '8px 12px',
+                          background: 'var(--color-bg-subtle, #f8fafc)',
+                          borderRadius: 'var(--radius-sm, 6px)',
+                          border: '1px solid var(--color-border)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                          <strong>{h.oldStatus ? `${h.oldStatus} → ${h.newStatus}` : h.newStatus}</strong>
+                          <span className="cz-muted">{formatDate(h.timestamp)}</span>
+                        </div>
+                        {h.note && <div style={{ color: 'var(--color-text-muted)' }}>Note: {h.note}</div>}
+                        {h.changedByEmail && <div style={{ fontSize: 11, color: 'var(--color-text-muted)' }}>By: {h.changedByEmail}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {selected.status === 'Delivered' && (

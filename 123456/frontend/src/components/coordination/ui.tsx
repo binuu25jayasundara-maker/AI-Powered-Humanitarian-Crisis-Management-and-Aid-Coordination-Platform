@@ -22,16 +22,34 @@ const URGENCY_BADGE: Record<Urgency, string> = {
 };
 
 const STATUS_BADGE: Record<CaseStatus, string> = {
-  Open: 'badge-blue',
+  Submitted: 'badge-blue',
+  'Under Review': 'badge-amber',
+  'Needs Information': 'badge-amber',
+  Verified: 'badge-blue',
+  Prioritised: 'badge-red',
+  Assigned: 'badge-navy',
   'In Progress': 'badge-navy',
+  Fulfilled: 'badge-green',
+  Closed: 'badge-green',
+  Rejected: 'badge-red',
+  Open: 'badge-blue',
   Escalated: 'badge-red',
   Unresolved: 'badge-amber',
   Resolved: 'badge-green'
 };
 
 export const STATUS_COLOR: Record<CaseStatus, string> = {
-  Open: '#0866C6',
+  Submitted: '#0866C6',
+  'Under Review': '#FFB51B',
+  'Needs Information': '#E68A00',
+  Verified: '#0070F3',
+  Prioritised: '#D9383A',
+  Assigned: '#0B3B70',
   'In Progress': '#0B3B70',
+  Fulfilled: '#12A86B',
+  Closed: '#107E54',
+  Rejected: '#DC3545',
+  Open: '#0866C6',
   Escalated: '#DC3545',
   Unresolved: '#FFB51B',
   Resolved: '#12A86B'

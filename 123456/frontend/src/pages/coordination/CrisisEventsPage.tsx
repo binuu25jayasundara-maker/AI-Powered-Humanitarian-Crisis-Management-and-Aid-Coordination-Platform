@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarClock, Plus, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CalendarClock, Plus, MapPin, AlertTriangle } from 'lucide-react';
 import { coordinationApi, formatDateTime } from '../../services/coordinationApi';
 import { AreaStatus, CrisisEvent, EventSeverity, EventStatus } from '../../types/coordination';
 import { EmptyState, Field, Modal, PageHeader, Panel, useToast } from '../../components/coordination/ui';
@@ -22,11 +23,16 @@ const toLocalInput = (d: Date): string => {
 };
 
 export const CrisisEventsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [events, setEvents] = useState<CrisisEvent[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showArea, setShowArea] = useState(false);
   const [toast, showToast] = useToast();
+
+  const isOffline = coordinationApi.isOffline();
 
   // create event form
   const [name, setName] = useState('');
@@ -43,11 +49,22 @@ export const CrisisEventsPage: React.FC = () => {
   const [areaStatus, setAreaStatus] = useState<AreaStatus>('Affected');
   const [areaError, setAreaError] = useState('');
 
+  const loadData = () => {
+    setLoading(true);
+    setLoadError(null);
+    coordinationApi.getEvents()
+      .then((e) => {
+        setEvents(e);
+        if (e.length && !selectedId) setSelectedId(e[0].id);
+      })
+      .catch((err: any) => {
+        setLoadError(err.message || 'Failed to load crisis events');
+      })
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
-    coordinationApi.getEvents().then((e) => {
-      setEvents(e);
-      if (e.length) setSelectedId(e[0].id);
-    });
+    loadData();
   }, []);
 
   const selected = events.find((e) => e.id === selectedId) || null;
@@ -57,26 +74,34 @@ export const CrisisEventsPage: React.FC = () => {
       setEventError('Event name is required.');
       return;
     }
-    const created = await coordinationApi.createEvent({
-      name: name.trim(),
-      type,
-      severity,
-      description: description.trim(),
-      startedAt: new Date(startedAt).toISOString()
-    });
-    setEvents(await coordinationApi.getEvents());
-    setSelectedId(created.id);
-    setShowCreate(false);
-    setName('');
-    setDescription('');
-    setEventError('');
-    showToast('Crisis event created');
+    try {
+      const created = await coordinationApi.createEvent({
+        name: name.trim(),
+        type,
+        severity,
+        description: description.trim(),
+        startedAt: new Date(startedAt).toISOString()
+      });
+      setEvents(await coordinationApi.getEvents());
+      setSelectedId(created.id);
+      setShowCreate(false);
+      setName('');
+      setDescription('');
+      setEventError('');
+      showToast('Crisis event created');
+    } catch (err: any) {
+      setEventError(err.message || 'Failed to create event');
+    }
   };
 
   const changeStatus = async (status: EventStatus) => {
     if (!selected) return;
-    setEvents(await coordinationApi.setEventStatus(selected.id, status));
-    showToast(`Status changed to ${status}`);
+    try {
+      setEvents(await coordinationApi.setEventStatus(selected.id, status));
+      showToast(`Status changed to ${status}`);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to change status');
+    }
   };
 
   const submitArea = async () => {
@@ -86,25 +111,66 @@ export const CrisisEventsPage: React.FC = () => {
       setAreaError('Name, district and a valid population are required.');
       return;
     }
-    setEvents(
-      await coordinationApi.addOperationalArea(selected.id, {
-        name: areaName.trim(),
-        district: areaDistrict.trim(),
-        populationAtRisk: Math.round(pop),
-        status: areaStatus
-      })
-    );
-    setShowArea(false);
-    setAreaName('');
-    setAreaDistrict('');
-    setAreaPop('');
-    setAreaStatus('Affected');
-    setAreaError('');
-    showToast('Operational area added');
+    try {
+      setEvents(
+        await coordinationApi.addOperationalArea(selected.id, {
+          name: areaName.trim(),
+          district: areaDistrict.trim(),
+          populationAtRisk: Math.round(pop),
+          status: areaStatus
+        })
+      );
+      setShowArea(false);
+      setAreaName('');
+      setAreaDistrict('');
+      setAreaPop('');
+      setAreaStatus('Affected');
+      setAreaError('');
+      showToast('Operational area added');
+    } catch (err: any) {
+      setAreaError(err.message || 'Failed to add area');
+    }
   };
+
+  if (loadError) {
+    const isAuth = loadError.toLowerCase().includes('log in') || loadError.toLowerCase().includes('authentication') || loadError.includes('401');
+    return (
+      <div className="co-page">
+        <Panel>
+          <EmptyState title="Could not load crisis events" message={loadError} />
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            {isAuth ? (
+              <button className="co-btn co-btn-blue" onClick={() => navigate('/login')}>Go to Login</button>
+            ) : (
+              <button className="co-btn co-btn-blue" onClick={loadData}>Try again</button>
+            )}
+          </div>
+        </Panel>
+      </div>
+    );
+  }
 
   return (
     <div className="co-page">
+      {isOffline && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 16px',
+          backgroundColor: 'var(--color-amber-soft)',
+          border: '1px solid var(--color-amber-dark)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--color-amber-dark)',
+          marginBottom: '16px',
+          fontWeight: 600,
+          fontSize: '14px'
+        }}>
+          <AlertTriangle size={18} />
+          <span>Offline: showing demo data (Core API unreachable)</span>
+        </div>
+      )}
+
       <PageHeader
         badges={<span className="badge badge-amber"><CalendarClock size={13} /> Coordination</span>}
         title="Crisis Events"

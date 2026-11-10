@@ -24,27 +24,112 @@ const write = (key: string, value: unknown) => localStorage.setItem(key, JSON.st
 const wait = (ms = 200) => new Promise<void>((r) => setTimeout(r, ms));
 const ago = (minutes: number) => new Date(Date.now() - minutes * 60000).toISOString();
 
-/** Try the real backend. Returns null if it is offline or fails (we then use mock data). */
-async function tryBackend<T>(path: string, init?: RequestInit): Promise<T | null> {
+export class CoreApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'CoreApiError';
+    this.status = status;
+  }
+}
+
+let _isOffline = false;
+export const isCitizenOffline = () => _isOffline;
+
+export interface CoreAssistanceRequestDto {
+  id: string;
+  reference: string;
+  category: string;
+  urgency: string;
+  description: string;
+  location: string;
+  lat?: number | null;
+  lng?: number | null;
+  contactPhone?: string | null;
+  evidenceName?: string | null;
+  householdSize?: number | null;
+  status: string;
+  citizenStage: string;
+  createdAt: string;
+  history?: Array<{
+    id: string;
+    oldStatus: string;
+    newStatus: string;
+    changedByEmail: string;
+    note?: string;
+    timestamp: string;
+  }>;
+}
+
+/** Requests the Core API, unwraps the envelope and handles auth/error states. */
+async function requestCoreApi<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = localStorage.getItem('resqnet_token');
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 2500);
+  const timer = setTimeout(() => ctrl.abort(), 3500);
   try {
-    const token = localStorage.getItem('resqnet_token');
     const res = await fetch(`${API_BASE}${path}`, {
       ...init,
       signal: ctrl.signal,
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(init?.headers || {})
       }
     });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return (json.data ?? json) as T;
-  } catch {
-    return null;
+
+    if (res.status === 401) {
+      _isOffline = false;
+      throw new CoreApiError('Authentication required. Please log in again.', 401);
+    }
+    if (res.status === 403) {
+      _isOffline = false;
+      throw new CoreApiError('Access denied. You do not have permission to view or manage these requests.', 403);
+    }
+
+    let json: any = null;
+    try {
+      json = await res.json();
+    } catch {
+      // no json
+    }
+
+    if (res.status === 400) {
+      _isOffline = false;
+      const errMsg = Array.isArray(json?.errors) && json.errors.length > 0
+        ? json.errors.join(', ')
+        : (json?.message || 'Validation failed.');
+      throw new CoreApiError(errMsg, 400);
+    }
+
+    if (res.status >= 500) {
+      _isOffline = false;
+      throw new CoreApiError(json?.message || `Server error (${res.status}). Please try again later.`, res.status);
+    }
+
+    if (!res.ok) {
+      _isOffline = false;
+      throw new CoreApiError(json?.message || `Request failed with status ${res.status}`, res.status);
+    }
+
+    _isOffline = false;
+    return (json?.data !== undefined ? json.data : json) as T;
+  } catch (err) {
+    if (err instanceof CoreApiError) {
+      throw err;
+    }
+    _isOffline = true;
+    throw err;
   } finally {
     clearTimeout(timer);
+  }
+}
+
+/** Try the real backend. Returns null if it is offline or fails (we then use mock data). */
+async function tryBackend<T>(path: string, init?: RequestInit): Promise<T | null> {
+  try {
+    return await requestCoreApi<T>(path, init);
+  } catch {
+    return null;
   }
 }
 
@@ -237,26 +322,122 @@ const defaultProfile = (name: string): CitizenProfile => ({
 
 // ---------- API ----------
 export const citizenApi = {
+  isOffline(): boolean {
+    return _isOffline;
+  },
+
   async getRequests(): Promise<AidRequest[]> {
-    await wait();
-    const list = read<AidRequest[]>(KEYS.requests, seedRequests);
-    return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    try {
+      const dtos = await requestCoreApi<CoreAssistanceRequestDto[]>('/requests/mine');
+      const mapped: AidRequest[] = dtos.map((dto) => ({
+        id: dto.id,
+        reference: dto.reference,
+        category: (dto.category as any) || 'Other',
+        urgency: (dto.urgency as any) || 'Medium',
+        description: dto.description,
+        location: dto.location,
+        lat: dto.lat ?? undefined,
+        lng: dto.lng ?? undefined,
+        contactPhone: dto.contactPhone ?? undefined,
+        evidenceName: dto.evidenceName ?? undefined,
+        householdSize: dto.householdSize ?? undefined,
+        status: (dto.citizenStage as any) || 'Received',
+        rawStatus: dto.status,
+        citizenStage: dto.citizenStage,
+        createdAt: dto.createdAt,
+        history: (dto.history || []).map((h) => ({
+          id: h.id,
+          oldStatus: h.oldStatus,
+          newStatus: h.newStatus,
+          changedByEmail: h.changedByEmail,
+          note: h.note,
+          timestamp: h.timestamp
+        }))
+      }));
+
+      // Append any offline queued requests saved locally
+      const localList = read<AidRequest[]>(KEYS.requests, []);
+      const queued = localList.filter((r) => r.queued);
+      return [...queued, ...mapped].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    } catch (err) {
+      if (err instanceof CoreApiError) {
+        throw err;
+      }
+      // Network failure -> fallback to local demo data
+      await wait(100);
+      const list = read<AidRequest[]>(KEYS.requests, seedRequests);
+      return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    }
   },
 
   async createRequest(input: NewAidRequest): Promise<AidRequest> {
-    await wait(400);
     const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+    if (!offline) {
+      try {
+        const dto = await requestCoreApi<CoreAssistanceRequestDto>('/requests', {
+          method: 'POST',
+          body: JSON.stringify({
+            category: input.category,
+            urgency: input.urgency,
+            description: input.description,
+            location: input.location,
+            lat: input.lat,
+            lng: input.lng,
+            contactPhone: input.contactPhone,
+            evidenceName: input.evidenceName,
+            householdSize: (input as any).householdSize ?? 1
+          })
+        });
+
+        const created: AidRequest = {
+          id: dto.id,
+          reference: dto.reference,
+          category: (dto.category as any) || input.category,
+          urgency: (dto.urgency as any) || input.urgency,
+          description: dto.description || input.description,
+          location: dto.location || input.location,
+          lat: dto.lat ?? input.lat,
+          lng: dto.lng ?? input.lng,
+          contactPhone: dto.contactPhone ?? input.contactPhone,
+          evidenceName: dto.evidenceName ?? input.evidenceName,
+          householdSize: dto.householdSize ?? undefined,
+          status: (dto.citizenStage as any) || 'Received',
+          rawStatus: dto.status,
+          citizenStage: dto.citizenStage,
+          createdAt: dto.createdAt,
+          history: (dto.history || []).map((h) => ({
+            id: h.id,
+            oldStatus: h.oldStatus,
+            newStatus: h.newStatus,
+            changedByEmail: h.changedByEmail,
+            note: h.note,
+            timestamp: h.timestamp
+          }))
+        };
+
+        const list = read<AidRequest[]>(KEYS.requests, seedRequests);
+        write(KEYS.requests, [created, ...list.filter((x) => x.id !== created.id)]);
+        return created;
+      } catch (err) {
+        if (err instanceof CoreApiError) {
+          throw err;
+        }
+        // Network unreachable -> fallback to local queued creation below
+      }
+    }
+
+    // Offline mode: distinctly mark as local/queued, NEVER as a real reference number
+    await wait(300);
     const req: AidRequest = {
       ...input,
-      id: `r${Date.now()}`,
-      reference: `REQ-${String(Date.now()).slice(-6)}`,
+      id: `local-${Date.now()}`,
+      reference: `LOCAL-QUEUED-${String(Date.now()).slice(-6)}`,
       status: 'Received',
+      rawStatus: 'Local Queued',
+      citizenStage: 'Received',
       createdAt: new Date().toISOString(),
-      queued: offline
+      queued: true
     };
-    if (!offline) {
-      await tryBackend<AidRequest>('/citizen/requests', { method: 'POST', body: JSON.stringify(req) });
-    }
     const list = read<AidRequest[]>(KEYS.requests, seedRequests);
     write(KEYS.requests, [req, ...list]);
     return req;

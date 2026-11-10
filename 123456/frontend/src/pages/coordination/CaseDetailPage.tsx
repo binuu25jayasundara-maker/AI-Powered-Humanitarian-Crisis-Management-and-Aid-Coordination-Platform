@@ -18,7 +18,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { coordinationApi, formatDateTime, isOverdue, slaLabel } from '../../services/coordinationApi';
-import { AIReviewItem, CaseEvidence, CrisisCase } from '../../types/coordination';
+import {
+  AIReviewItem,
+  CaseEvidence,
+  CrisisCase,
+  ALLOWED_STATUS_TRANSITIONS,
+  CoreCaseStatus,
+  isNoteRequiredForStatus
+} from '../../types/coordination';
 import {
   ConfidenceBar,
   EmptyState,
@@ -32,6 +39,7 @@ import {
   useToast
 } from '../../components/coordination/ui';
 import { AiRecommendationCard } from '../../components/ai/AiRecommendationCard';
+import { AlertTriangle } from 'lucide-react';
 
 const STAFF = ['Chaminda Silva', 'Nadeesha Perera', 'Kasun Jayawardena'];
 
@@ -65,29 +73,60 @@ export const CaseDetailPage: React.FC = () => {
   const [original, setOriginal] = useState<CrisisCase | null>(null);
   const [review, setReview] = useState<AIReviewItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [action, setAction] = useState<ActionKind | null>(null);
   const [note, setNote] = useState('');
   const [assignee, setAssignee] = useState(STAFF[0]);
   const [error, setError] = useState('');
   const [toast, showToast] = useToast();
 
+  const isOffline = coordinationApi.isOffline();
+  const [statusModal, setStatusModal] = useState<{ targetStatus: CoreCaseStatus } | null>(null);
+  const [statusNote, setStatusNote] = useState('');
+  const [statusError, setStatusError] = useState('');
+
   const load = useCallback(async () => {
     if (!caseId) return;
-    const c = await coordinationApi.getCase(caseId);
-    setItem(c);
-    if (c?.duplicateOfId) {
-      setOriginal(await coordinationApi.getCase(c.duplicateOfId));
-    } else {
-      setOriginal(null);
+    try {
+      setLoadError(null);
+      const c = await coordinationApi.getCase(caseId);
+      setItem(c);
+      if (c?.duplicateOfId) {
+        setOriginal(await coordinationApi.getCase(c.duplicateOfId));
+      } else {
+        setOriginal(null);
+      }
+      const reviews = await coordinationApi.getAIReviews();
+      setReview(reviews.find((r) => r.caseId === caseId && r.status === 'Pending') || null);
+    } catch (err: any) {
+      setLoadError(err.message || 'Failed to load case');
+    } finally {
+      setLoading(false);
     }
-    const reviews = await coordinationApi.getAIReviews();
-    setReview(reviews.find((r) => r.caseId === caseId && r.status === 'Pending') || null);
-    setLoading(false);
   }, [caseId]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const submitStatusChange = async () => {
+    if (!item || !statusModal) return;
+    const noteRequired = isNoteRequiredForStatus(statusModal.targetStatus);
+    if (noteRequired && !statusNote.trim()) {
+      setStatusError(`A note is required when transitioning to ${statusModal.targetStatus}.`);
+      return;
+    }
+    try {
+      setStatusError('');
+      await coordinationApi.updateRequestStatus(item.id, statusModal.targetStatus, statusNote.trim());
+      setStatusModal(null);
+      setStatusNote('');
+      await load();
+      showToast(`Status updated to ${statusModal.targetStatus}`);
+    } catch (err: any) {
+      setStatusError(err.message || 'Failed to update status');
+    }
+  };
 
   const openAction = (kind: ActionKind) => {
     setAction(kind);
@@ -124,6 +163,23 @@ export const CaseDetailPage: React.FC = () => {
   };
 
   if (loading) return <div className="co-page"><EmptyState title="Loading case..." /></div>;
+  if (loadError) {
+    const isAuth = loadError.toLowerCase().includes('log in') || loadError.toLowerCase().includes('authentication') || loadError.includes('401');
+    return (
+      <div className="co-page">
+        <Panel>
+          <EmptyState title="Could not load case" message={loadError} />
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            {isAuth ? (
+              <button className="co-btn co-btn-blue" onClick={() => navigate('/login')}>Go to Login</button>
+            ) : (
+              <button className="co-btn co-btn-blue" onClick={load}>Try again</button>
+            )}
+          </div>
+        </Panel>
+      </div>
+    );
+  }
   if (!item) {
     return (
       <div className="co-page">
@@ -138,12 +194,32 @@ export const CaseDetailPage: React.FC = () => {
   }
 
   const resolved = item.status === 'Resolved';
+  const allowedNextStatuses = (ALLOWED_STATUS_TRANSITIONS[item.status] || []) as CoreCaseStatus[];
 
   return (
     <div className="co-page">
       <button className="co-btn co-btn-ghost co-btn-sm" style={{ marginBottom: 16 }} onClick={() => navigate('/coordination/cases')}>
         <ArrowLeft size={14} /> Back to Case Queue
       </button>
+
+      {isOffline && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 16px',
+          backgroundColor: 'var(--color-amber-soft)',
+          border: '1px solid var(--color-amber-dark)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--color-amber-dark)',
+          marginBottom: '16px',
+          fontWeight: 600,
+          fontSize: '14px'
+        }}>
+          <AlertTriangle size={18} />
+          <span>Offline: showing demo data (Core API unreachable)</span>
+        </div>
+      )}
 
       <PageHeader
         badges={
@@ -161,34 +237,58 @@ export const CaseDetailPage: React.FC = () => {
       {/* Action buttons */}
       <div className="card co-mb" style={{ padding: '16px 20px' }}>
         <div className="co-actions">
-          {!resolved && (
-            <button className="co-btn co-btn-blue" onClick={() => openAction('assign')}>
-              <UserCheck size={16} /> {item.assignedTo ? 'Reassign' : 'Assign'}
-            </button>
+          {!isOffline ? (
+            /* Connected to Core API: Show only real status change control */
+            allowedNextStatuses.length > 0 ? (
+              allowedNextStatuses.map((st) => (
+                <button
+                  key={st}
+                  className={`co-btn ${st === 'Rejected' ? 'co-btn-red' : 'co-btn-blue'}`}
+                  onClick={() => {
+                    setStatusModal({ targetStatus: st });
+                    setStatusNote('');
+                    setStatusError('');
+                  }}
+                >
+                  Change Status: {st}
+                </button>
+              ))
+            ) : (
+              <span className="badge badge-navy">Terminal Status: {item.status}</span>
+            )
+          ) : (
+            /* Offline demo mode: keep existing mock actions */
+            <>
+              {!resolved && (
+                <button className="co-btn co-btn-blue" onClick={() => openAction('assign')}>
+                  <UserCheck size={16} /> {item.assignedTo ? 'Reassign' : 'Assign'}
+                </button>
+              )}
+              {!resolved && item.status !== 'Escalated' && (
+                <button className="co-btn co-btn-red" onClick={() => openAction('escalate')}>
+                  <ArrowUpRight size={16} /> Escalate
+                </button>
+              )}
+              {!resolved && item.status !== 'Unresolved' && (
+                <button className="co-btn co-btn-amber" onClick={() => openAction('unresolved')}>
+                  <HelpCircle size={16} /> Mark unresolved
+                </button>
+              )}
+              {!resolved && (
+                <button className="co-btn co-btn-green" onClick={() => openAction('resolve')}>
+                  <CheckCircle2 size={16} /> Resolve
+                </button>
+              )}
+              {resolved && (
+                <button className="co-btn co-btn-ghost" onClick={() => openAction('reopen')}>
+                  <RotateCcw size={16} /> Reopen
+                </button>
+              )}
+              <button className="co-btn co-btn-ghost" onClick={() => openAction('note')}>
+                <MessageSquare size={16} /> Add note
+              </button>
+            </>
           )}
-          {!resolved && item.status !== 'Escalated' && (
-            <button className="co-btn co-btn-red" onClick={() => openAction('escalate')}>
-              <ArrowUpRight size={16} /> Escalate
-            </button>
-          )}
-          {!resolved && item.status !== 'Unresolved' && (
-            <button className="co-btn co-btn-amber" onClick={() => openAction('unresolved')}>
-              <HelpCircle size={16} /> Mark unresolved
-            </button>
-          )}
-          {!resolved && (
-            <button className="co-btn co-btn-green" onClick={() => openAction('resolve')}>
-              <CheckCircle2 size={16} /> Resolve
-            </button>
-          )}
-          {resolved && (
-            <button className="co-btn co-btn-ghost" onClick={() => openAction('reopen')}>
-              <RotateCcw size={16} /> Reopen
-            </button>
-          )}
-          <button className="co-btn co-btn-ghost" onClick={() => openAction('note')}>
-            <MessageSquare size={16} /> Add note
-          </button>
         </div>
       </div>
 
@@ -272,6 +372,30 @@ export const CaseDetailPage: React.FC = () => {
           />
         </div>
       </div>
+
+      {statusModal && (
+        <Modal
+          title={`Update Status to ${statusModal.targetStatus}`}
+          subtitle={`${item.ref} - ${isNoteRequiredForStatus(statusModal.targetStatus) ? 'A note is required for this transition' : 'Optional note for status change audit trail'}`}
+          onClose={() => setStatusModal(null)}
+          footer={
+            <>
+              <button className="co-btn co-btn-ghost" onClick={() => setStatusModal(null)}>Cancel</button>
+              <button className="co-btn co-btn-blue" onClick={submitStatusChange}>Confirm Status Change</button>
+            </>
+          }
+        >
+          <Field label={isNoteRequiredForStatus(statusModal.targetStatus) ? 'Note (Required)' : 'Note (Optional)'}>
+            <textarea
+              rows={4}
+              value={statusNote}
+              onChange={(e) => setStatusNote(e.target.value)}
+              placeholder="Explain the reason for this transition..."
+            />
+          </Field>
+          {statusError && <div className="co-error">{statusError}</div>}
+        </Modal>
+      )}
 
       {action && (
         <Modal

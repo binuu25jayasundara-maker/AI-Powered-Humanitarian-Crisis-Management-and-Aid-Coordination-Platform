@@ -1,22 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Search, Copy } from 'lucide-react';
+import { ClipboardList, Search, Copy, AlertTriangle } from 'lucide-react';
 import { coordinationApi, isActive, isOverdue, NEED_TYPES, priorityScore, slaLabel, timeAgo, URGENCY_ORDER } from '../../services/coordinationApi';
 import { CrisisCase, NeedType, Urgency } from '../../types/coordination';
-import { EmptyState, PageHeader, StatusBadge, Tabs, UrgencyBadge } from '../../components/coordination/ui';
+import { EmptyState, PageHeader, Panel, StatusBadge, Tabs, UrgencyBadge } from '../../components/coordination/ui';
 
 type TabKey = 'all' | 'open' | 'overdue' | 'escalated' | 'unresolved';
 
 const matchesTab = (c: CrisisCase, tab: TabKey): boolean => {
   switch (tab) {
     case 'open':
-      return c.status === 'Open' || c.status === 'In Progress';
+      return isActive(c);
     case 'overdue':
       return isOverdue(c);
     case 'escalated':
-      return c.status === 'Escalated';
+      return c.status === 'Escalated' || c.status === 'Prioritised';
     case 'unresolved':
-      return c.status === 'Unresolved';
+      return c.status === 'Unresolved' || c.status === 'Needs Information';
     default:
       return true;
   }
@@ -25,14 +25,31 @@ const matchesTab = (c: CrisisCase, tab: TabKey): boolean => {
 export const CaseQueuePage: React.FC = () => {
   const navigate = useNavigate();
   const [cases, setCases] = useState<CrisisCase[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>('all');
   const [search, setSearch] = useState('');
   const [urgency, setUrgency] = useState<'ALL' | Urgency>('ALL');
   const [need, setNeed] = useState<'ALL' | NeedType>('ALL');
 
+  const loadData = () => {
+    setLoading(true);
+    setError(null);
+    coordinationApi.getCases()
+      .then((data) => {
+        setCases(data);
+      })
+      .catch((err: any) => {
+        setError(err.message || 'Failed to load cases');
+      })
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
-    coordinationApi.getCases().then(setCases);
+    loadData();
   }, []);
+
+  const isOffline = coordinationApi.isOffline();
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -62,8 +79,50 @@ export const CaseQueuePage: React.FC = () => {
       });
   }, [cases, tab, search, urgency, need]);
 
+  if (error) {
+    const isAuth = error.toLowerCase().includes('log in') || error.toLowerCase().includes('authentication') || error.includes('401');
+    return (
+      <div className="co-page">
+        <PageHeader
+          badges={<span className="badge badge-blue"><ClipboardList size={13} /> Coordination</span>}
+          title="Case Queue"
+          subtitle="All incoming help requests, ranked by priority."
+        />
+        <Panel>
+          <EmptyState title="Could not load cases" message={error} />
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            {isAuth ? (
+              <button className="co-btn co-btn-blue" onClick={() => navigate('/login')}>Go to Login</button>
+            ) : (
+              <button className="co-btn co-btn-blue" onClick={loadData}>Try again</button>
+            )}
+          </div>
+        </Panel>
+      </div>
+    );
+  }
+
   return (
     <div className="co-page">
+      {isOffline && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 16px',
+          backgroundColor: 'var(--color-amber-soft)',
+          border: '1px solid var(--color-amber-dark)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--color-amber-dark)',
+          marginBottom: '16px',
+          fontWeight: 600,
+          fontSize: '14px'
+        }}>
+          <AlertTriangle size={18} />
+          <span>Offline: showing demo data (Core API unreachable)</span>
+        </div>
+      )}
+
       <PageHeader
         badges={<span className="badge badge-blue"><ClipboardList size={13} /> Coordination</span>}
         title="Case Queue"

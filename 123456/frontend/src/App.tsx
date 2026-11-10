@@ -112,14 +112,17 @@ export const App: React.FC = () => {
             <Route path="/admin/ai-status" element={<AiStatusPage />} />
           </Route>
 
-          {/* Coordination & Governance Routes */}
-          <Route element={<ProtectedRoute allowedRoles={['EmergencyCoordinator', 'SystemAdmin']} />}>
+          {/* Coordination Routes (Request/case content - SystemAdmin excluded) */}
+          <Route element={<ProtectedRoute allowedRoles={['EmergencyCoordinator']} />}>
             <Route path="/dashboard/emergency-coordinator" element={<CoordinatorDashboard />} />
             <Route path="/coordination/operations" element={<Navigate to="/dashboard/emergency-coordinator" replace />} />
             <Route path="/coordination/events" element={<CrisisEventsPage />} />
             <Route path="/coordination/partners" element={<PartnerCoordinationPage />} />
             <Route path="/coordination/reports" element={<ReportsPage />} />
-            {/* Governance */}
+          </Route>
+
+          {/* Governance Routes */}
+          <Route element={<ProtectedRoute allowedRoles={['EmergencyCoordinator', 'SystemAdmin']} />}>
             <Route path="/governance/ai-decisions" element={<AIDecisionLogPage />} />
             <Route path="/governance/ai-status" element={<AiStatusPage />} />
             <Route path="/governance/forecasting" element={<ForecastingPage />} />
@@ -131,8 +134,8 @@ export const App: React.FC = () => {
             <Route path="/governance/duplicates" element={<DuplicatesPage />} />
           </Route>
 
-          {/* Case Queue Accessible to Emergency Coordinator, Case Manager & Admin */}
-          <Route element={<ProtectedRoute allowedRoles={['EmergencyCoordinator', 'CaseManager', 'SystemAdmin']} />}>
+          {/* Case Queue Accessible to Emergency Coordinator & Case Manager (Admins do not get request content) */}
+          <Route element={<ProtectedRoute allowedRoles={['EmergencyCoordinator', 'CaseManager']} />}>
             <Route path="/coordination/cases" element={<CaseQueuePage />} />
             <Route path="/coordination/cases/:caseId" element={<CaseDetailPage />} />
             {/* Standalone AI Case Review Demo */}

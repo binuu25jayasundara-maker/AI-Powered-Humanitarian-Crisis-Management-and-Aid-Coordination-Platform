@@ -3,7 +3,53 @@
 // ==========================================
 
 export type Urgency = 'Critical' | 'High' | 'Medium' | 'Low';
-export type CaseStatus = 'Open' | 'In Progress' | 'Escalated' | 'Unresolved' | 'Resolved';
+export type CoreCaseStatus =
+  | 'Submitted'
+  | 'Under Review'
+  | 'Needs Information'
+  | 'Verified'
+  | 'Prioritised'
+  | 'Assigned'
+  | 'In Progress'
+  | 'Fulfilled'
+  | 'Closed'
+  | 'Rejected';
+
+export type CaseStatus =
+  | CoreCaseStatus
+  | 'Open'
+  | 'Escalated'
+  | 'Unresolved'
+  | 'Resolved';
+
+export const CORE_CASE_STATUSES: CoreCaseStatus[] = [
+  'Submitted',
+  'Under Review',
+  'Needs Information',
+  'Verified',
+  'Prioritised',
+  'Assigned',
+  'In Progress',
+  'Fulfilled',
+  'Closed',
+  'Rejected'
+];
+
+export const ALLOWED_STATUS_TRANSITIONS: Record<string, CoreCaseStatus[]> = {
+  Submitted: ['Under Review'],
+  'Under Review': ['Needs Information', 'Verified', 'Rejected'],
+  'Needs Information': ['Under Review'],
+  Verified: ['Prioritised', 'Rejected'],
+  Prioritised: ['Assigned'],
+  Assigned: ['In Progress'],
+  'In Progress': ['Fulfilled'],
+  Fulfilled: ['Closed'],
+  Closed: [],
+  Rejected: []
+};
+
+export const isNoteRequiredForStatus = (target: string): boolean =>
+  target === 'Needs Information' || target === 'Rejected';
 export type NeedType =
   | 'Medical'
   | 'Food'

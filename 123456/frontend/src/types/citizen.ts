@@ -6,6 +6,15 @@ export const REQUEST_STEPS: RequestStatus[] = ['Received', 'Assigned', 'On the w
 export const CATEGORIES: RequestCategory[] = ['Food & Water', 'Shelter', 'Medical', 'Rescue / Evacuation', 'Other'];
 export const URGENCIES: Urgency[] = ['Low', 'Medium', 'High', 'Critical'];
 
+export interface AidRequestHistory {
+  id: string;
+  oldStatus: string;
+  newStatus: string;
+  changedByEmail: string;
+  note?: string;
+  timestamp: string;
+}
+
 export interface AidRequest {
   id: string;
   reference: string;
@@ -17,12 +26,16 @@ export interface AidRequest {
   lng?: number;
   contactPhone?: string;
   evidenceName?: string;
+  householdSize?: number;
   status: RequestStatus;
+  rawStatus?: string;
+  citizenStage?: string;
   createdAt: string;
   etaMinutes?: number;
   rating?: number;
   feedback?: string;
   queued?: boolean; // true = saved offline, waiting to be sent
+  history?: AidRequestHistory[];
 }
 
 export type NewAidRequest = Pick<

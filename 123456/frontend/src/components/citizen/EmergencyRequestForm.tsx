@@ -75,8 +75,8 @@ export const EmergencyRequestForm: React.FC<Props> = ({ initialCategory, require
         contactPhone: phone.trim() || undefined, evidenceName: file?.name
       });
       setDone(req);
-    } catch {
-      setSendError('We could not send your request. Please try again.');
+    } catch (err: any) {
+      setSendError(err.message || 'We could not send your request. Please try again.');
     } finally {
       setSending(false);
     }
