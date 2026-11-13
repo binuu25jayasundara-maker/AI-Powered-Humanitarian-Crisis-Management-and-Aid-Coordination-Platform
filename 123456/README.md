@@ -1,134 +1,154 @@
-# ResQnet.AI — Merged Solution (Members 1, 2, 3, 4, 5 & 6)
+# ResQnet.AI — Humanitarian Crisis Management & Aid Coordination Platform
 
-**System**: AI-Powered Humanitarian Crisis Management and Aid Coordination Platform  
-**Merged Scope**: 
-- **Member 1 (Auth & Governance)**: Foundation, JWT Authentication, RBAC Security, User & Organization Management, Centralized Audit Trail, and Role-Based Dashboards.
-- **Member 2 (Citizen Portal)**: Public Emergency Request Dispatch, Multi-Category Aid Assistance (Food, Water, Medical, Rescue), Request Status Tracking with Live Stepper, Safety Alerts & Official DMC Advisories, In-App Notifications, Offline Request Queueing with Auto-Flush on Reconnection, Citizen Profile & Accessibility Needs, Rating/Feedback System, and Integrated AI Assistant Trigger.
-- **Member 3 (Crisis Coordination)**: Crisis Events, Case Queue Triage, AI Recommendation Review Queue & Decision Auditing, Inter-agency Partner Coordination, and SLA Analytics.
-- **Member 4 (AI Services & Decision Support)**: Interactive Slide-Over AI Assistant with Language Detection (English, Sinhala, Tamil) & Offline FAQ Fallback, AI Recommendation Cards with Human-in-the-Loop (HITL) Governance (Approve, Modify, Reject, Defer), Non-Destructive Duplicate Detection Engine, AI Service Health & Telemetry Status Page, and Predictive Aid Demand Forecasting.
-- **Member 5 (Resources, Shelters & Maps)**: Real-time Resource Inventory & Logistics, Strict Concurrency Allocation Guards (`SemaphoreSlim`), Shelter Capacity & Household Allocation Over-Allocation Guards, Leaflet-powered Interactive Shelters Map, and Multi-layer Operational Tactical Crisis Map.
-- **Member 6 (Donors & Volunteers)**: Volunteers Management, Donors, Campaigns, Notification Factory & Domain Event Observers.
+ResQnet.AI is an integrated humanitarian crisis management and aid coordination platform that connects affected citizens, emergency coordinators, case triage officers, resource managers, and volunteer/donor networks into a cohesive, secure disaster-response workflow. The platform coordinates public emergency assistance dispatch, AI-assisted case analysis and duplicate triage, real-time resource and shelter occupancy allocation with strict concurrency guards, multi-channel notification dispatch, and public donations and volunteering. The default demo data is set in Sri Lanka (featuring Disaster Management Centre and Sri Lanka Red Cross operational contexts).
 
 ---
 
-## 1. Merged Solution Architecture & Structure
+## 1. Architecture Overview
+
+The system follows a distributed microservices-style architecture composed of five ASP.NET Core backend services and a single-page React frontend.
 
 ```
-Member 12356/
+123456/
 ├── backend/
-│   ├── ResQnet.Merged.slnx          # Master solution compiling all 12 projects across M1, M5, M6
-│   ├── ResQnet.Member1.Api/         # Auth, Admin, User, Org Controllers
-│   ├── ResQnet.Member1.Application/ # Member 1 Application logic
-│   ├── ResQnet.Member1.Domain/      # Member 1 Entities
-│   ├── ResQnet.Member1.Infrastructure/
-│   ├── ResQnet.Member1.Tests/       # 6/6 Passing xUnit tests
-│   ├── ResQnet.Member5.Api/         # Resources, Shelters, Map, Allocations & Route Controllers (Port 5100)
-│   ├── ResQnet.Member5.Tests/       # 37/37 Passing xUnit tests (Over-allocation & Concurrency guards)
-│   ├── ResQnet.Member6.Api/         # Campaign, Donation, Volunteer, Notification Controllers
-│   ├── ResQnet.Member6.Application/
-│   ├── ResQnet.Member6.Domain/
-│   ├── ResQnet.Member6.Infrastructure/
-│   └── ResQnet.Member6.Tests/       # 5/5 Passing xUnit tests
-├── frontend/                        # Unified React 18 + TypeScript + Vite UI
-│   ├── src/
-│   │   ├── components/              # Header, Sidebar, Toast, ProtectedRoute, coordination & citizen widgets
-│   │   │   ├── citizen/             # Member 2: EmergencyRequestForm, ActionCard, Stepper, CapacityBar, etc.
-│   │   │   └── coordination/        # Member 3: Coordination UI components
-│   │   ├── context/                 # AuthContext
-│   │   ├── pages/                   # All Role Dashboards & Integrated Modules
-│   │   │   ├── citizen/             # Member 2: RequestPage, TrackerPage, SheltersPage, AlertsPage, NotificationsPage, ProfilePage
-│   │   │   ├── coordination/        # Member 3: Crisis events, cases, partner coordination, AI review
-│   │   │   ├── ResourcesPage.tsx        # Screen 1: Resources & Logistics (Member 5)
-│   │   │   ├── AllocationsPage.tsx      # Allocation History & Audit (Member 5)
-│   │   │   ├── SheltersPage.tsx         # Screen 2: Shelter Management & Over-allocation Guard (Member 5)
-│   │   │   ├── MapSheltersPage.tsx      # Screen 3: Interactive Shelter Map & Directions (Member 5)
-│   │   │   ├── OperationalMapPage.tsx   # Screen 4: Multi-layer Tactical Crisis Map (Member 5)
-│   │   │   ├── CitizenDashboardPage.tsx # Integrated Citizen Portal Home (Member 2 + 5 Map integration)
-│   │   │   ├── EmergencyHelpPage.tsx    # Public Direct Distress Channel (Member 1 + Member 2 Citizen Sync)
-│   │   │   ├── EmergencyCoordinatorDashboardPage.tsx
-│   │   │   ├── SystemAdminDashboardPage.tsx
-│   │   │   ├── CaseManagerDashboardPage.tsx
-│   │   │   ├── VolunteerCoordinatorDashboardPage.tsx
-│   │   │   └── DonorOfficerDashboardPage.tsx
-│   │   ├── services/
-│   │   │   ├── api.ts                   # Member 1 & 6 API Client with mock fallbacks
-│   │   │   ├── citizenApi.ts            # Member 2 Citizen API Client with localStorage & offline queueing
-│   │   │   ├── coordinationApi.ts       # Member 3 API Client with storage fallbacks
-│   │   │   └── resourceShelterApi.ts    # Member 5 API Client with live backend & mock fallbacks
-│   │   ├── styles/
-│   │   │   ├── tokens.css               # Unified color tokens
-│   │   │   ├── global.css               # Global layout, tables, modals, badges, leaflet overrides
-│   │   │   ├── coordination.css         # Coordination & governance styling
-│   │   │   └── citizen.css              # Citizen portal styling
-│   │   └── types/
-│   │       ├── index.ts                 # Re-exported root contracts
-│   │       ├── citizen.ts               # Member 2 Citizen contracts
-│   │       ├── coordination.ts          # Member 3 Coordination contracts
-│   │       └── resourcesAndShelters.ts  # Member 5 Resource & Shelter contracts
-│   ├── package.json
-│   └── vite.config.ts
-├── database/
-└── README.md
+│   ├── ResQnet.Merged.slnx          # Solution compiling all 19 projects across all modules
+│   ├── ResQnet.Member1.Api/         # Auth, RBAC, Users, Organizations & Central Audit Trail
+│   ├── ResQnet.Member4.Api/         # AI Decision Support, Duplicate Detection & Case Forecasting
+│   ├── ResQnet.Member5.Api/         # Resource Inventory, Shelter Allocation & Tactical Maps
+│   ├── ResQnet.Member6.Api/         # Volunteers, Donors, Campaigns & Notification Factory
+│   └── ResQnet.UnifiedApi/          # Core Citizen Assistance Requests & Crisis Events
+├── frontend/                        # Unified React 18 + TypeScript + Vite Single-Page Application
+├── database/                        # SQL Server schema and initial seed scripts
+└── docs/                            # Integration notes and technical specifications
 ```
 
----
+### Services, Ports & Documentation
 
-## 2. Integrated Feature Matrix
-
-| Feature Module | Route | Access Permissions | Primary Service |
-|---|---|---|---|
-| **Citizen Dashboard** | `/dashboard/citizen` | Citizen, SystemAdmin | `citizenApi.ts` |
-| **Emergency Help Request** | `/citizen/request` | Citizen, SystemAdmin | `citizenApi.ts` |
-| **Request Status Tracker** | `/citizen/requests` | Citizen, SystemAdmin | `citizenApi.ts` |
-| **Map & Shelters** | `/citizen/shelters` | All Roles & Public | `citizenApi.ts`, `ShelterApi` |
-| **Safety Alerts & DMC** | `/citizen/alerts` | Citizen, SystemAdmin | `citizenApi.ts` |
-| **Citizen Notifications** | `/citizen/notifications` | Citizen, SystemAdmin | `citizenApi.ts` |
-| **Citizen Profile & Needs** | `/citizen/profile` | Citizen, SystemAdmin | `citizenApi.ts` |
-| **Public SOS Distress Hub** | `/emergency-help` | Public / All | `EmergencyHelpPage.tsx` + `citizenApi.ts` |
-| **Resources & Logistics** | `/resources` | EmergencyCoordinator, SystemAdmin | `ResQnet.Member5.Api/ResourcesController` |
-| **Allocation History** | `/resources/allocations` | EmergencyCoordinator, SystemAdmin | `ResQnet.Member5.Api/AllocationsController` |
-| **Shelter Management Guard** | `/shelters` | EmergencyCoordinator, CaseManager, SystemAdmin | `ResQnet.Member5.Api/SheltersController` |
-| **Operational Tactical Map** | `/operational-map` | EmergencyCoordinator, SystemAdmin | `ResQnet.Member5.Api/MapController` |
-| **Crisis Coordination** | `/coordination/*` | EmergencyCoordinator, CaseManager, SystemAdmin | Coordination API |
-| **AI Governance & Review** | `/governance/*` | EmergencyCoordinator, SystemAdmin | Coordination API |
-| **Volunteers & Campaigns** | `/volunteers`, `/campaigns` | VolunteerCoordinator, DonorOfficer, SystemAdmin | `ResQnet.Member6.Api` |
-| **User & Org Administration** | `/admin/*` | SystemAdmin | `ResQnet.Member1.Api` |
+| Service | Project | Port | Local URL | Swagger / OpenAPI URL |
+|---|---|:---:|---|---|
+| **Member 1: Auth & Governance** | `ResQnet.Member1.Api` | `5016` | http://localhost:5016 | http://localhost:5016/swagger |
+| **Member 4: AI Decision Support** | `ResQnet.Member4.Api` | `5157` | http://localhost:5157 | http://localhost:5157/swagger |
+| **Member 5: Resources & Shelters** | `ResQnet.Member5.Api` | `5126` | http://localhost:5126 | http://localhost:5126/swagger |
+| **Member 6: Volunteers & Donors** | `ResQnet.Member6.Api` | `5006` | http://localhost:5006 | http://localhost:5006/ *(root)* |
+| **Core API: Requests & Events** | `ResQnet.UnifiedApi` | `5200` | http://localhost:5200 | http://localhost:5200/swagger |
+| **Frontend UI** | `frontend/` | `5173` | http://localhost:5173 | *(Web Application)* |
 
 ---
 
-## 3. Ports and Configuration
+## 2. Prerequisites
 
-| Service | Project | URL | Swagger |
-|---|---|---|---|
-| Auth, users, audit | `ResQnet.Member1.Api` | http://localhost:5016 | `/swagger` |
-| AI services | `ResQnet.Member4.Api` | http://localhost:5157 | `/swagger` |
-| Resources, shelters, map | `ResQnet.Member5.Api` | http://localhost:5126 | `/swagger` |
-| Volunteers, donors, campaigns | `ResQnet.Member6.Api` | http://localhost:5006 | `/` |
-| Core API (citizen + coordination) | *to be built* | http://localhost:5200 (reserved) | - |
-| Frontend | `frontend/` | http://localhost:5173 | - |
+- **.NET 10 SDK** (v10.0.x or higher)
+- **Node.js 20+** and **npm**
+- **PowerShell 7+** or Windows PowerShell
 
-The frontend reads its API addresses from `frontend/.env` (copy `frontend/.env.example`). If the file is missing, the defaults above are used.
-When an API is not running, parts of the frontend fall back to mock/localStorage data, so always start the APIs before demonstrating.
+---
 
-## 4. How to Run
+## 3. How to Run on Windows PowerShell
 
-Requirements: .NET 10 SDK, Node 20+.
+### Step 1: Frontend Environment Setup
+From the repository root, copy the environment template to `frontend/.env`:
+```powershell
+Copy-Item frontend\.env.example frontend\.env
+```
+*(If `frontend/.env` is omitted, the frontend automatically falls back to default localhost ports).*
+
+### Step 2: Start All 5 Backend APIs
+Open **five separate PowerShell windows** (or terminal tabs) from the repository root and run each service with the `http` launch profile:
 
 ```powershell
-# 1. Build and test everything
-cd backend
-dotnet build ResQnet.Merged.slnx
-dotnet test ResQnet.Merged.slnx
-
-# 2. Start each API in its own terminal (from the repository root)
+# Terminal 1 — Member 1: Auth & Governance (Port 5016)
 dotnet run --project backend/ResQnet.Member1.Api --launch-profile http
+
+# Terminal 2 — Member 4: AI Decision Support (Port 5157)
 dotnet run --project backend/ResQnet.Member4.Api --launch-profile http
+
+# Terminal 3 — Member 5: Resources & Shelters (Port 5126)
 dotnet run --project backend/ResQnet.Member5.Api --launch-profile http
+
+# Terminal 4 — Member 6: Volunteers & Donors (Port 5006)
 dotnet run --project backend/ResQnet.Member6.Api --launch-profile http
 
-# 3. Start the frontend
+# Terminal 5 — Core API: Requests & Events (Port 5200)
+dotnet run --project backend/ResQnet.UnifiedApi --launch-profile http
+```
+
+### Step 3: Start the React Frontend
+In a **sixth PowerShell window**, install dependencies and launch Vite:
+```powershell
 cd frontend
-copy .env.example .env
 npm install
 npm run dev
 ```
+
+> **PowerShell Execution Policy Tip**: If PowerShell blocks `npm` with a script execution error (`PSSecurityException`), use `npm.cmd` instead:
+> ```powershell
+> npm.cmd install
+> npm.cmd run dev
+> ```
+
+Open http://localhost:5173 in your browser to access the application.
+
+---
+
+## 4. Automated Test Suite
+
+Run all tests across the solution using the .NET CLI:
+```powershell
+dotnet test backend/ResQnet.Merged.slnx
+```
+
+### Verified Test Project Results
+
+| Test Project | Framework | Passed | Failed | Skipped | Total Tests |
+|---|---|:---:|:---:|:---:|:---:|
+| `ResQnet.Member1.Tests` | net10.0 | 10 | 0 | 0 | **10** |
+| `ResQnet.Member4.Tests` | net10.0 | 26 | 0 | 0 | **26** |
+| `ResQnet.Member5.Tests` | net10.0 | 43 | 0 | 0 | **43** |
+| `ResQnet.Member6.Tests` | net10.0 | 16 | 0 | 0 | **16** |
+| `ResQnet.UnifiedApi.Tests` | net10.0 | 98 | 0 | 0 | **98** |
+| **All Test Projects** | | **193** | **0** | **0** | **193** |
+
+---
+
+## 5. Seeded Demo Accounts & Roles
+
+All demo accounts are seeded from Member 1's `DbInitializer` and share the same default password: **`Password@123`**
+
+| Email | Full Name | Role | Organization | Primary Responsibilities |
+|---|---|---|---|---|
+| `admin@resqnet.org` | Platform Administrator | `SystemAdmin` | DMC-LK | Platform configuration, security controls, user management & audit trail |
+| `coordinator@resqnet.org` | Chaminda Silva | `EmergencyCoordinator` | DMC-LK | Crisis event oversight, high-level case triage & AI decision approvals |
+| `casemanager@resqnet.org` | Nadeesha Perera | `CaseManager` | DMC-LK | Citizen assistance request review, verification & status advancement |
+| `volunteer.coord@resqnet.org` | Kasun Jayawardena | `VolunteerCoordinator` | SLRC | Volunteer registration, scheduling & crisis task assignment |
+| `donor.officer@resqnet.org` | Anura Fernando | `DonorOfficer` | SLRC | Fundraising campaigns, financial tracking & donation intake |
+| `citizen@resqnet.org` | Sunil Weerasinghe | `Citizen` | *(Public / None)* | Submitting emergency aid requests & real-time tracking |
+| `logistics@resqnet.org` | Logistics Manager | `LogisticsManager` | DMC-LK | Warehouse inventory management, supplies & logistics dispatch |
+| `shelter@resqnet.org` | Shelter Administrator | `ShelterAdmin` | DMC-LK | Shelter capacity, household intake & over-allocation prevention |
+| `partner@resqnet.org` | Partner Officer | `PartnerOfficer` | SLRC | Relief agency liaison & external partner coordination |
+
+---
+
+## 6. Security Summary
+
+- **JWT Bearer Authentication**: Centralized symmetric token generation (Member 1) validated across all API microservices (`Member1`, `Member4`, `Member5`, `Member6`, and `UnifiedApi`).
+- **Role-Based Access Control (RBAC)**: All sensitive endpoints enforce explicit role requirements using ASP.NET Core `[Authorize(Roles = "...")]` attributes.
+- **Strict Separation of Duties**: The `SystemAdmin` role has full administrative authority over users, organizations, and security audit logs, but has **no access** to citizen request content or case triage data. Citizen assistance records are strictly restricted to operational response roles (`Citizen`, `CaseManager`, `EmergencyCoordinator`).
+- **PII Protection**: Member 4 applies automatic regex-based masking of phone numbers and email addresses before dispatching prompt payloads to external LLM endpoints.
+
+---
+
+## 7. Known Limitations
+
+1. **In-Memory Storage in Development**: In default Development mode, all APIs use Entity Framework Core's InMemory database provider. All state resets whenever an API process is stopped or restarted.
+2. **Co-Restart Requirement for Member 4 & Core API**: AI case linkages and duplicate checks reference numerical sequence identifiers. When clearing or restarting in-memory state, restart `ResQnet.Member4.Api` and `ResQnet.UnifiedApi` together so case numbers remain synchronized.
+3. **Simulated AI by Default**: Member 4 operates in an intelligent, rule-based simulated mode unless an external OpenAI-compatible chat-completions endpoint is configured. The relevant keys in `appsettings.json` (or environment variables) are:
+   - `AI:ApiKey` (or env var `AI__ApiKey`): API secret key. If empty, the service uses rule-based simulation without network calls.
+   - `AI:Endpoint` (or env var `AI__Endpoint`): Defaults to `https://api.openai.com/v1/chat/completions`.
+   - `AI:Model` (or env var `AI__Model`): Defaults to `gpt-4o-mini`.
+   - `AI:TimeoutSeconds` (or env var `AI__TimeoutSeconds`): HTTP timeout in seconds (default `4`).
+4. **Frontend Demo Data & "Offline" Banner**: If any backend API is unreachable or not yet booted, the frontend gracefully falls back to local/demo data and displays a persistent orange "Offline" warning banner at the top of the interface.
+5. **Simulated Notification Channels**: SMS, Email, and Push notification channels in Member 6 execute domain event observers and record audit logs to the database, but do not connect to live SMS/Email gateways.
+6. **SQL Server Mode Not Executed End-to-End**: The five SQL Server database creation and seed scripts in `database/` have been created to define the full schema and initial data, but have not yet been run against SQL Server end-to-end.
+7. **Resources & Shelters Not Connected to Approved Requests**: Member 5's resource inventory and shelter allocation management operate as dedicated modules and are not yet automatically wired to dispatch events from approved assistance requests in `UnifiedApi`.
+8. **Donor Donation History**: Donors cannot currently view their personal historical donation records, as donations do not store the donor's email address.
+9. **Public Registration Role Scope**: The public registration portal creates accounts only with the `Citizen` or `DonorAndVolunteer` roles. Administrative and coordinator accounts must be seeded or created by a `SystemAdmin`.
