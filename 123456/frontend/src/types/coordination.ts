@@ -105,6 +105,10 @@ export interface CrisisCase {
   ai: AIAssessment;
   firstResponseMinutes: number | null;
   eventId: string;
+  /** M4 AI case number, e.g. '#2347'. Staff-only; never shown to citizens. */
+  aiCaseNumber?: string | null;
+  /** Original category from Core API */
+  category?: string;
 }
 
 // ---------- Crisis events ----------

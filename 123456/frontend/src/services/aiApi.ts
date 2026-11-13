@@ -347,6 +347,72 @@ export const aiApi = {
   },
 
   /**
+   * Get case review with recommendation directly from API without mock fallback
+   */
+  async getCaseLive(caseNumber: string): Promise<CaseReview> {
+    const cleanNum = caseNumber.replace('#', '');
+    const res = await fetch(`${AI_API_BASE}/cases/${cleanNum}`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      let errorMsg = `Failed to get case review (${res.status})`;
+      try {
+        const errJson = await res.json();
+        if (errJson.message) errorMsg = errJson.message;
+      } catch {}
+      throw new Error(errorMsg);
+    }
+    const json: ApiResponse<CaseReview> = await res.json();
+    return json.data;
+  },
+
+  /**
+   * Create a new Member4 case and obtain AI recommendation
+   */
+  async createCase(
+    description: string,
+    location: string,
+    category: string
+  ): Promise<{ caseNumber: string; recommendation: AiRecommendation }> {
+    const res = await fetch(`${AI_API_BASE}/cases`, {
+      method: 'POST',
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({
+        description,
+        location,
+        category
+      })
+    });
+
+    if (!res.ok) {
+      let errorMsg = `AI service returned error (${res.status})`;
+      try {
+        const errJson = await res.json();
+        if (errJson.message) errorMsg = errJson.message;
+        else if (errJson.errors && errJson.errors.length) errorMsg = errJson.errors.join(', ');
+      } catch {}
+      throw new Error(errorMsg);
+    }
+
+    const json = await res.json();
+    const match = json.message?.match(/#\d+/) || json.message?.match(/Case\s+(#?\d+)/);
+    let caseNumber = match ? (match[1] ? (match[1].startsWith('#') ? match[1] : '#' + match[1]) : match[0]) : '';
+    if (!caseNumber) {
+      const loc = res.headers.get('Location');
+      if (loc) {
+        const parts = loc.split('/');
+        const last = decodeURIComponent(parts[parts.length - 1]);
+        caseNumber = last.startsWith('#') ? last : '#' + last;
+      }
+    }
+
+    return {
+      caseNumber: caseNumber || '#0000',
+      recommendation: json.data
+    };
+  },
+
+  /**
    * Get case review with recommendation
    */
   async getCase(caseNumber: string = '#2341'): Promise<CaseReview> {
@@ -395,21 +461,32 @@ export const aiApi = {
         })
       });
       if (res.ok) return true;
-    } catch {}
 
-    // In-memory / Mock update
-    if (action === 'Approve') MOCK_CASE_2341.status = 'Approved';
-    else if (action === 'Modify') {
-      MOCK_CASE_2341.status = 'Approved with Modifications';
-      if (modifiedCategory && MOCK_CASE_2341.recommendation) {
-        MOCK_CASE_2341.recommendation.category = modifiedCategory;
+      let errorMsg = `Failed to record decision (${res.status})`;
+      try {
+        const errJson = await res.json();
+        if (errJson.message) errorMsg = errJson.message;
+        else if (errJson.errors && errJson.errors.length) errorMsg = errJson.errors.join(', ');
+      } catch {}
+      throw new Error(errorMsg);
+    } catch (err: any) {
+      if (cleanNum === '2341' && (!err.message || !err.message.includes('Failed to record decision'))) {
+        // In-memory / Mock update for demo case #2341
+        if (action === 'Approve') MOCK_CASE_2341.status = 'Approved';
+        else if (action === 'Modify') {
+          MOCK_CASE_2341.status = 'Approved with Modifications';
+          if (modifiedCategory && MOCK_CASE_2341.recommendation) {
+            MOCK_CASE_2341.recommendation.category = modifiedCategory;
+          }
+          if (modifiedUrgency && MOCK_CASE_2341.recommendation) {
+            MOCK_CASE_2341.recommendation.urgency = modifiedUrgency;
+          }
+        } else if (action === 'Reject') MOCK_CASE_2341.status = 'Rejected';
+        else if (action === 'Defer') MOCK_CASE_2341.status = 'Deferred for Investigation';
+        return true;
       }
-      if (modifiedUrgency && MOCK_CASE_2341.recommendation) {
-        MOCK_CASE_2341.recommendation.urgency = modifiedUrgency;
-      }
-    } else if (action === 'Reject') MOCK_CASE_2341.status = 'Rejected';
-    else if (action === 'Defer') MOCK_CASE_2341.status = 'Deferred for Investigation';
-    return true;
+      throw err;
+    }
   },
 
   /**

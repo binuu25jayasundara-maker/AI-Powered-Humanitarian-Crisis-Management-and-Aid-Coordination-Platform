@@ -27,6 +27,7 @@ namespace ResQnet.UnifiedApi.Data
                 e.Property(r => r.LocationText).IsRequired().HasMaxLength(500);
                 e.Property(r => r.ContactPhone).HasMaxLength(50);
                 e.Property(r => r.EvidenceName).HasMaxLength(250);
+                e.Property(r => r.AiCaseNumber).HasMaxLength(32);
 
                 e.HasMany(r => r.History)
                  .WithOne(h => h.Request)

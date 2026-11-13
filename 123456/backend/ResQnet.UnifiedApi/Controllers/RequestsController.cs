@@ -178,5 +178,33 @@ namespace ResQnet.UnifiedApi.Controllers
                 return BadRequest(ApiResponse<object>.Fail(ex.Message));
             }
         }
+
+        [HttpPut("{id:guid}/ai-link")]
+        [Authorize(Roles = "EmergencyCoordinator,CaseManager")]
+        public async Task<IActionResult> LinkAiCase(Guid id, [FromBody] LinkAiCaseDto dto)
+        {
+            var role = GetCallerRole();
+            if (role == "SystemAdmin")
+                return Forbid();
+
+            if (string.IsNullOrWhiteSpace(dto.AiCaseNumber))
+                return BadRequest(ApiResponse<object>.Fail("AiCaseNumber is required."));
+
+            // Strip leading '#' for digit-only validation
+            var digits = dto.AiCaseNumber.TrimStart('#').Trim();
+            if (string.IsNullOrEmpty(digits) || !System.Text.RegularExpressions.Regex.IsMatch(digits, @"^\d{1,10}$"))
+                return BadRequest(ApiResponse<object>.Fail("AiCaseNumber must be in the format '#<digits>' (1–10 digits)."));
+
+            var (result, conflict) = await _requestService.LinkAiCaseAsync(id, dto.AiCaseNumber, GetCallerEmail());
+
+            if (result == null)
+                return NotFound(ApiResponse<object>.Fail("Assistance request not found."));
+
+            if (conflict)
+                return Conflict(ApiResponse<AssistanceRequestDto>.Fail(
+                    $"This request is already linked to AI case '{result.AiCaseNumber}'. Cannot overwrite with a different case number."));
+
+            return Ok(ApiResponse<AssistanceRequestDto>.Ok(result, "AI case number linked successfully."));
+        }
     }
 }

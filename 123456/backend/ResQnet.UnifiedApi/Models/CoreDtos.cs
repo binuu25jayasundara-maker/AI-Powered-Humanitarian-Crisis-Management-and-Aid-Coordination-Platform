@@ -32,6 +32,7 @@ namespace ResQnet.UnifiedApi.Models
         public int? HouseholdSize { get; set; }
         public string Status { get; set; } = string.Empty;
         public string CitizenStage { get; set; } = string.Empty;
+        public string? AiCaseNumber { get; set; }
         public string CreatedAt { get; set; } = string.Empty;
         public List<RequestStatusHistoryDto> History { get; set; } = new();
     }
@@ -119,5 +120,10 @@ namespace ResQnet.UnifiedApi.Models
         public string District { get; set; } = string.Empty;
         public int PopulationAtRisk { get; set; }
         public string Status { get; set; } = "Affected";
+    }
+
+    public class LinkAiCaseDto
+    {
+        public string AiCaseNumber { get; set; } = string.Empty;
     }
 }

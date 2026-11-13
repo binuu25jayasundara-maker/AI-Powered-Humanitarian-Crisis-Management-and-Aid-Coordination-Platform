@@ -16,6 +16,7 @@ namespace ResQnet.UnifiedApi.Services
         Task<List<AssistanceRequestDto>> GetAllAsync(string? statusFilter, string? categoryFilter, string? urgencyFilter, bool isStaff);
         Task<AssistanceRequestDto?> GetByIdAsync(Guid id, string callerEmail, bool isStaff);
         Task<AssistanceRequestDto?> UpdateStatusAsync(Guid id, string newStatusDisplay, string? note, string changedByEmail);
+        Task<(AssistanceRequestDto? dto, bool conflict)> LinkAiCaseAsync(Guid id, string aiCaseNumber, string calledByEmail);
     }
 
     public class AssistanceRequestService : IAssistanceRequestService
@@ -222,6 +223,39 @@ namespace ResQnet.UnifiedApi.Services
             return MapToDto(req, isOwner: false, isStaff: true);
         }
 
+        public async Task<(AssistanceRequestDto? dto, bool conflict)> LinkAiCaseAsync(Guid id, string aiCaseNumber, string calledByEmail)
+        {
+            var req = await _db.AssistanceRequests
+                .Include(r => r.History)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (req == null) return (null, false);
+
+            // Normalise: strip leading '#', ensure it is digits-only, re-add '#'
+            var trimmed = aiCaseNumber.TrimStart('#').Trim();
+            var normalised = "#" + trimmed;
+
+            // If already linked to a DIFFERENT number, return conflict
+            if (!string.IsNullOrWhiteSpace(req.AiCaseNumber) &&
+                !req.AiCaseNumber.Equals(normalised, StringComparison.OrdinalIgnoreCase))
+            {
+                return (MapToDto(req, isOwner: false, isStaff: true), true);
+            }
+
+            // Idempotent: same number already linked
+            if (!string.IsNullOrWhiteSpace(req.AiCaseNumber) &&
+                req.AiCaseNumber.Equals(normalised, StringComparison.OrdinalIgnoreCase))
+            {
+                return (MapToDto(req, isOwner: false, isStaff: true), false);
+            }
+
+            req.AiCaseNumber = normalised;
+            req.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            return (MapToDto(req, isOwner: false, isStaff: true), false);
+        }
+
         private AssistanceRequestDto MapToDto(AssistanceRequest req, bool isOwner, bool isStaff)
         {
             var showContact = isOwner || isStaff;
@@ -241,6 +275,7 @@ namespace ResQnet.UnifiedApi.Services
                 HouseholdSize = req.HouseholdSize,
                 Status = _transitionService.ToDisplayString(req.Status),
                 CitizenStage = _transitionService.ToCitizenStage(req.Status),
+                AiCaseNumber = isStaff ? req.AiCaseNumber : null,
                 CreatedAt = req.CreatedAt.ToString("o"),
                 History = req.History
                     .OrderBy(h => h.Timestamp)

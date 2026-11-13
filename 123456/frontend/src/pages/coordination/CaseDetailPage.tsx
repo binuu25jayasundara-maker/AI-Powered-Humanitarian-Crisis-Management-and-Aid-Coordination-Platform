@@ -365,6 +365,9 @@ export const CaseDetailPage: React.FC = () => {
           <AiRecommendationCard
             caseItem={item}
             reviewerEmail={user?.email || 'coordinator@resqnet.org'}
+            onAiCaseLinked={(caseNum) => {
+              setItem((prev) => (prev ? { ...prev, aiCaseNumber: caseNum } : prev));
+            }}
             onDecisionMade={(actionName) => {
               load();
               showToast(`${item.ref}: ${actionName} - recorded in audit log`);

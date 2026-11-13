@@ -142,7 +142,9 @@ const mapDtoToCrisisCase = (dto: any): CrisisCase => {
       modelVersion: 'triage-model-2.4'
     },
     firstResponseMinutes: timeline.length > 1 ? 15 : null,
-    eventId: ''
+    eventId: '',
+    aiCaseNumber: dto.aiCaseNumber || null,
+    category: dto.category
   };
 };
 
@@ -669,6 +671,25 @@ export const coordinationApi = {
         throw err;
       }
       return loadCases().find((c) => c.id === id) || null;
+    }
+  },
+
+  async linkAiCase(id: string, aiCaseNumber: string): Promise<CrisisCase> {
+    try {
+      const dto = await requestCoordCore<any>(`/requests/${id}/ai-link`, {
+        method: 'PUT',
+        body: JSON.stringify({ aiCaseNumber })
+      });
+      return mapDtoToCrisisCase(dto);
+    } catch (err) {
+      if (err instanceof CoreCoordApiError) {
+        throw err;
+      }
+      return patchCase(
+        id,
+        (c) => { c.aiCaseNumber = aiCaseNumber; },
+        { actor: 'Coordinator', action: `Linked AI Case ${aiCaseNumber}` }
+      );
     }
   },
 

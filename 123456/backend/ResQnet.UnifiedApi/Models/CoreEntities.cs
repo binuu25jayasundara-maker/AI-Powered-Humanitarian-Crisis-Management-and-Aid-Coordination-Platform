@@ -59,6 +59,7 @@ namespace ResQnet.UnifiedApi.Models
         public AssistanceRequestStatus Status { get; set; } = AssistanceRequestStatus.Submitted;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public string? AiCaseNumber { get; set; }
         public ICollection<RequestStatusHistory> History { get; set; } = new List<RequestStatusHistory>();
     }
 

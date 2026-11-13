@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   BrainCircuit,
   Check,
@@ -11,30 +11,45 @@ import {
   ShieldCheck,
   RefreshCw,
   CheckCircle2,
-  Sliders,
-  Clock,
-  ExternalLink
+  Clock
 } from 'lucide-react';
 import { aiApi } from '../../services/aiApi';
+import { coordinationApi } from '../../services/coordinationApi';
 import { AiRecommendation, CaseReview } from '../../types/ai';
 import { CrisisCase } from '../../types/coordination';
 
 interface AiRecommendationCardProps {
   caseItem: CrisisCase;
   onDecisionMade?: (action: string, note: string) => void;
+  onAiCaseLinked?: (aiCaseNumber: string) => void;
   reviewerEmail?: string;
 }
+
+const CORE_TO_M4_CATEGORY: Record<string, string> = {
+  'Food & Water': 'Food & Water',
+  'Shelter': 'Shelter',
+  'Medical': 'Emergency Medical',
+  'Rescue / Evacuation': 'Search & Rescue',
+  'Other': 'Disaster Relief'
+};
 
 export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
   caseItem,
   onDecisionMade,
+  onAiCaseLinked,
   reviewerEmail = 'coordinator@resqnet.org'
 }) => {
   const [loading, setLoading] = useState(false);
+  const [linking, setLinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [recommendation, setRecommendation] = useState<AiRecommendation | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
-  const [isFallback, setIsFallback] = useState(false);
+
+  const [activeCaseNumber, setActiveCaseNumber] = useState<string | null>(caseItem.aiCaseNumber || null);
+  const [recommendation, setRecommendation] = useState<AiRecommendation | null>(null);
+  const [caseReviewData, setCaseReviewData] = useState<CaseReview | null>(null);
+  const [isDemoData, setIsDemoData] = useState(false);
 
   // Modal states
   const [showModifyModal, setShowModifyModal] = useState(false);
@@ -44,73 +59,168 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
   // Form states
   const [modCategory, setModCategory] = useState('Disaster Relief');
   const [modUrgency, setModUrgency] = useState('High - immediate assistance needed.');
-  const [modAction, setModAction] = useState('Coordinate with local authorities and NGOs.');
   const [modJustification, setModJustification] = useState('');
   const [rejectReason, setRejectReason] = useState('');
 
+  // Update activeCaseNumber if caseItem changes
   useEffect(() => {
-    loadRecommendation();
-  }, [caseItem.id, caseItem.ref]);
+    if (caseItem.aiCaseNumber) {
+      setActiveCaseNumber(caseItem.aiCaseNumber);
+    }
+  }, [caseItem.aiCaseNumber]);
 
-  const loadRecommendation = async () => {
+  // Load existing recommendation if aiCaseNumber is present
+  const loadExistingCase = useCallback(async (caseNumber: string) => {
     setLoading(true);
     setError(null);
-
     try {
-      // First try fetching live from aiApi
-      const review = await aiApi.getCase(caseItem.ref || `#${caseItem.id.replace('c-', '')}`);
-      if (review && review.recommendation) {
+      const review = await aiApi.getCaseLive(caseNumber);
+      setCaseReviewData(review);
+      if (review.recommendation) {
         setRecommendation(review.recommendation);
-        setIsFallback(Boolean(review.recommendation.fallback || review.recommendation.providerStrategy.includes('Fallback')));
         setModCategory(review.recommendation.category);
         setModUrgency(review.recommendation.urgency);
-        setModAction(review.recommendation.suggest);
-      } else if (caseItem.ai) {
-        // Fallback to caseItem's existing Member 3 AI assessment
-        setRecommendation({
-          id: `rec-${caseItem.id}`,
-          category: caseItem.needType === 'Rescue' ? 'Disaster Relief' : caseItem.needType,
-          urgency: `${caseItem.ai.suggestedUrgency} - priority response recommended`,
-          view: caseItem.ai.recommendedAction,
-          suggest: 'Coordinate with local authorities and frontline responders.',
-          priorityScore: Math.round(caseItem.ai.confidence * 100),
-          confidence: caseItem.ai.confidence,
-          rationale: caseItem.ai.rationale.join('; '),
-          providerStrategy: caseItem.ai.modelVersion,
-          fallback: caseItem.ai.fallback
-        });
-        setIsFallback(caseItem.ai.fallback);
-      } else {
-        setRecommendation(null);
+      }
+      setIsDemoData(false);
+    } catch (err: any) {
+      setError(err.message || 'AI API unreachable. Could not load recommendation.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeCaseNumber) {
+      loadExistingCase(activeCaseNumber);
+    } else {
+      setRecommendation(null);
+      setCaseReviewData(null);
+    }
+  }, [activeCaseNumber, loadExistingCase]);
+
+  // Handler: "Get AI recommendation"
+  const handleGetAiRecommendation = async () => {
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+    setLinkError(null);
+    setDecisionError(null);
+
+    // Map Category (Core -> Member4)
+    const rawCategory = caseItem.category || (caseItem.needType === 'Rescue' ? 'Rescue / Evacuation' : caseItem.needType);
+    const m4Category = CORE_TO_M4_CATEGORY[rawCategory] || 'Disaster Relief';
+
+    // Description (must be 10-1000 characters)
+    let desc = caseItem.description?.trim() || '';
+    if (desc.length < 10) {
+      desc = `${caseItem.title || 'Assistance request'}: emergency assistance needed at location.`;
+    }
+    if (desc.length > 1000) {
+      desc = desc.substring(0, 1000);
+    }
+
+    // Location (send only description and location)
+    const loc = caseItem.location?.trim() || caseItem.district?.trim() || 'Central Province';
+
+    try {
+      const created = await aiApi.createCase(desc, loc, m4Category);
+      const caseNum = created.caseNumber;
+      setActiveCaseNumber(caseNum);
+      setRecommendation(created.recommendation);
+      setModCategory(created.recommendation.category);
+      setModUrgency(created.recommendation.urgency);
+      setIsDemoData(false);
+
+      // Link IMMEDIATELY to Core request
+      try {
+        await coordinationApi.linkAiCase(caseItem.id, caseNum);
+        onAiCaseLinked?.(caseNum);
+      } catch (lErr: any) {
+        setLinkError(lErr.message || 'Failed to link AI case to assistance request. You can retry linking below.');
+      }
+
+      // Fetch full case review to get possible-duplicate info
+      try {
+        const fullReview = await aiApi.getCaseLive(caseNum);
+        setCaseReviewData(fullReview);
+        if (fullReview.recommendation) {
+          setRecommendation(fullReview.recommendation);
+        }
+      } catch {
+        // Created recommendation already set from createCase response
       }
     } catch (err: any) {
-      setError('Could not contact AI Gateway. Local fallback heuristic available.');
-      if (caseItem.ai) {
-        setIsFallback(true);
-        setRecommendation({
-          id: `rec-${caseItem.id}`,
-          category: caseItem.needType,
-          urgency: caseItem.ai.suggestedUrgency,
-          view: caseItem.ai.recommendedAction,
-          suggest: 'Proceed with standard district emergency protocol.',
-          priorityScore: 85,
-          confidence: caseItem.ai.confidence || 0.8,
-          rationale: 'Local deterministic rule-based triage.',
-          providerStrategy: 'RuleBasedStrategy (Offline Heuristic)',
-          fallback: true
-        });
-      }
+      setError(err.message || 'AI service unreachable. Please ensure Member4 API is running at http://localhost:5157.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Retry linking without creating a new case
+  const handleRetryLink = async (caseNum: string) => {
+    setLinking(true);
+    setLinkError(null);
+    try {
+      await coordinationApi.linkAiCase(caseItem.id, caseNum);
+      onAiCaseLinked?.(caseNum);
+      setActionSuccess(`Successfully linked AI Case ${caseNum} to request.`);
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch (err: any) {
+      setLinkError(err.message || 'Retry failed. Ensure Core API is reachable.');
+    } finally {
+      setLinking(false);
+    }
+  };
+
+  // Offline demo fallback
+  const handleLoadDemoData = () => {
+    setIsDemoData(true);
+    setError(null);
+    setRecommendation({
+      id: 'rec-demo-2341',
+      category: 'Disaster Relief',
+      urgency: 'High - immediate assistance needed.',
+      view: 'Provide shelter, food supplies, medical aid.',
+      suggest: 'Coordinate with local authorities and NGOs.',
+      priorityScore: 88,
+      confidence: 0.94,
+      rationale: 'Simulated heuristic demo data. Member4 API was offline when request was evaluated.',
+      providerStrategy: 'RuleBasedStrategy (Deterministic Fallback)',
+      fallback: true
+    });
+    setCaseReviewData({
+      id: 'demo-2341',
+      caseNumber: '#2341',
+      title: 'Flood, Kandyyva (Demo)',
+      location: caseItem.location,
+      requestDetails: caseItem.description,
+      evidence: '',
+      status: 'Assessed - awaiting approval',
+      assignedAgency: 'DMC-LK',
+      possibleDuplicate: '#2187 - Flood (Kandy)',
+      duplicateRiskLevel: 'Medium'
+    });
+  };
+
+  // Submit human decisions
   const handleApprove = async () => {
-    const caseRef = caseItem.ref || `#${caseItem.id}`;
-    await aiApi.submitHumanDecision(caseRef, 'Approve', 'Approved without modifications by Authorized Coordinator.', undefined, undefined, reviewerEmail);
-    setActionSuccess('AI Recommendation APPROVED. Case advanced to agency dispatch queue.');
-    onDecisionMade?.('Approved', 'Approved AI recommendation without modification');
-    setTimeout(() => setActionSuccess(null), 4500);
+    const targetCaseNum = activeCaseNumber || '#2341';
+    setDecisionError(null);
+    try {
+      await aiApi.submitHumanDecision(
+        targetCaseNum,
+        'Approve',
+        'Approved without modifications by Authorized Coordinator.',
+        undefined,
+        undefined,
+        reviewerEmail
+      );
+      setActionSuccess(`AI Recommendation APPROVED for ${targetCaseNum}. Recorded in audit log.`);
+      onDecisionMade?.('Approved', 'Approved AI recommendation without modification');
+      setTimeout(() => setActionSuccess(null), 5000);
+    } catch (err: any) {
+      setDecisionError(err.message || 'Failed to submit decision.');
+    }
   };
 
   const handleModifySubmit = async (e: React.FormEvent) => {
@@ -119,20 +229,31 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
       alert('A justification note is required for human overrides.');
       return;
     }
-    const caseRef = caseItem.ref || `#${caseItem.id}`;
-    await aiApi.submitHumanDecision(caseRef, 'Modify', modJustification, modCategory, modUrgency, reviewerEmail);
-    setShowModifyModal(false);
-    if (recommendation) {
-      setRecommendation({
-        ...recommendation,
-        category: modCategory,
-        urgency: modUrgency,
-        suggest: modAction
-      });
+    const targetCaseNum = activeCaseNumber || '#2341';
+    setDecisionError(null);
+    try {
+      await aiApi.submitHumanDecision(
+        targetCaseNum,
+        'Modify',
+        modJustification.trim(),
+        modCategory,
+        modUrgency,
+        reviewerEmail
+      );
+      setShowModifyModal(false);
+      if (recommendation) {
+        setRecommendation({
+          ...recommendation,
+          category: modCategory,
+          urgency: modUrgency
+        });
+      }
+      setActionSuccess(`AI Recommendation MODIFIED and APPROVED for ${targetCaseNum}.`);
+      onDecisionMade?.('Modified & Approved', `Modified category to ${modCategory}, urgency to ${modUrgency}. Justification: ${modJustification}`);
+      setTimeout(() => setActionSuccess(null), 5000);
+    } catch (err: any) {
+      setDecisionError(err.message || 'Failed to submit modification.');
     }
-    setActionSuccess('AI Recommendation MODIFIED and APPROVED. Audit record created.');
-    onDecisionMade?.('Modified & Approved', `Modified category to ${modCategory}, urgency to ${modUrgency}. Justification: ${modJustification}`);
-    setTimeout(() => setActionSuccess(null), 4500);
   };
 
   const handleRejectSubmit = async (e: React.FormEvent) => {
@@ -141,25 +262,49 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
       alert('An explanation is required to reject an AI recommendation.');
       return;
     }
-    const caseRef = caseItem.ref || `#${caseItem.id}`;
-    await aiApi.submitHumanDecision(caseRef, 'Reject', rejectReason, undefined, undefined, reviewerEmail);
-    setShowRejectModal(false);
-    setActionSuccess('AI Recommendation REJECTED. Formal override recorded in audit log.');
-    onDecisionMade?.('Rejected', `Rejected recommendation. Reason: ${rejectReason}`);
-    setTimeout(() => setActionSuccess(null), 4500);
+    const targetCaseNum = activeCaseNumber || '#2341';
+    setDecisionError(null);
+    try {
+      await aiApi.submitHumanDecision(
+        targetCaseNum,
+        'Reject',
+        rejectReason.trim(),
+        undefined,
+        undefined,
+        reviewerEmail
+      );
+      setShowRejectModal(false);
+      setActionSuccess(`AI Recommendation REJECTED for ${targetCaseNum}. Recorded in audit log.`);
+      onDecisionMade?.('Rejected', `Rejected recommendation. Reason: ${rejectReason}`);
+      setTimeout(() => setActionSuccess(null), 5000);
+    } catch (err: any) {
+      setDecisionError(err.message || 'Failed to reject recommendation.');
+    }
   };
 
   const handleDefer = async () => {
-    const caseRef = caseItem.ref || `#${caseItem.id}`;
-    await aiApi.submitHumanDecision(caseRef, 'Defer', 'Deferred for ground-truth verification by local Grama Niladhari.', undefined, undefined, reviewerEmail);
+    const targetCaseNum = activeCaseNumber || '#2341';
+    setDecisionError(null);
     setShowMoreMenu(false);
-    setActionSuccess('Case DEFERRED for ground-truth investigation.');
-    onDecisionMade?.('Deferred', 'Deferred for ground-truth verification by local Grama Niladhari');
-    setTimeout(() => setActionSuccess(null), 4500);
+    try {
+      await aiApi.submitHumanDecision(
+        targetCaseNum,
+        'Defer',
+        'Deferred for ground-truth verification by local Grama Niladhari.',
+        undefined,
+        undefined,
+        reviewerEmail
+      );
+      setActionSuccess(`Case ${targetCaseNum} DEFERRED for ground-truth investigation.`);
+      onDecisionMade?.('Deferred', 'Deferred for ground-truth verification by local Grama Niladhari');
+      setTimeout(() => setActionSuccess(null), 5000);
+    } catch (err: any) {
+      setDecisionError(err.message || 'Failed to defer case.');
+    }
   };
 
-  // 1. Loading state
-  if (loading) {
+  // 1. Loading state (initial load of linked case)
+  if (loading && !recommendation) {
     return (
       <div className="card" style={{ padding: '24px', textAlign: 'center' }}>
         <div style={{ display: 'inline-block', animation: 'spin 1.5s linear infinite', marginBottom: '12px' }}>
@@ -175,7 +320,87 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
     );
   }
 
-  // 2. Error state
+  // 2. Idle State: no AI case has been created or loaded yet
+  if (!activeCaseNumber && !recommendation) {
+    return (
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          padding: '26px',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #e2e8f0',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          gap: '14px'
+        }}
+      >
+        <div style={{ backgroundColor: '#f0fdf4', borderRadius: '50%', padding: '14px', display: 'grid', placeItems: 'center' }}>
+          <BrainCircuit size={32} color="#16a34a" />
+        </div>
+        <div>
+          <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
+            AI Recommendation
+          </h3>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: 0, maxWidth: '320px', lineHeight: 1.5 }}>
+            Request category triage, urgency assessment, priority score, and semantic duplicate check from Member4 AI Gateway.
+          </p>
+        </div>
+
+        {error && (
+          <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px 14px', color: '#b91c1c', fontSize: '12.5px', textAlign: 'left', width: '100%', boxSizing: 'border-box' }}>
+            <div style={{ fontWeight: 700, marginBottom: '2px' }}>AI Service Notice:</div>
+            <div>{error}</div>
+            <div style={{ marginTop: '8px', textAlign: 'center' }}>
+              <button
+                className="co-btn co-btn-ghost co-btn-sm"
+                onClick={handleLoadDemoData}
+                style={{ fontSize: '11px', textDecoration: 'underline' }}
+              >
+                View demo data fallback (clearly labelled)
+              </button>
+            </div>
+          </div>
+        )}
+
+        <button
+          className="co-btn co-btn-blue"
+          onClick={handleGetAiRecommendation}
+          disabled={loading}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '12px 24px',
+            fontSize: '14px',
+            fontWeight: 700,
+            cursor: loading ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {loading ? (
+            <>
+              <div style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>
+                <RefreshCw size={16} />
+              </div>
+              Calling AI Gateway...
+            </>
+          ) : (
+            <>
+              <Sparkles size={16} /> Get AI recommendation
+            </>
+          )}
+        </button>
+
+        <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+          AI recommendations are advisory and never alter case status automatically.
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Error state if linked case failed to load
   if (error && !recommendation) {
     return (
       <div className="card" style={{ padding: '24px', border: '1px solid #fecaca', backgroundColor: '#fef2f2' }}>
@@ -186,39 +411,58 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
         <p style={{ fontSize: '13px', color: '#7f1d1d', margin: '8px 0 16px' }}>
           {error}
         </p>
-        <button
-          className="co-btn co-btn-blue co-btn-sm"
-          onClick={loadRecommendation}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-        >
-          <RefreshCw size={14} /> Retry AI Analysis
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            className="co-btn co-btn-blue co-btn-sm"
+            onClick={() => activeCaseNumber && loadExistingCase(activeCaseNumber)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <RefreshCw size={14} /> Retry AI Connection
+          </button>
+          <button
+            className="co-btn co-btn-ghost co-btn-sm"
+            onClick={handleLoadDemoData}
+          >
+            Show demo data
+          </button>
+        </div>
       </div>
     );
   }
 
-  // 3. Empty state
-  if (!recommendation) {
-    return (
-      <div className="card" style={{ padding: '28px', textAlign: 'center' }}>
-        <BrainCircuit size={32} color="#94a3b8" style={{ margin: '0 auto 8px' }} />
-        <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155' }}>
-          No Pending AI Recommendations
-        </div>
-        <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 16px' }}>
-          All automated assessments for this case have been reviewed or are not required.
-        </p>
-        <button className="co-btn co-btn-ghost co-btn-sm" onClick={loadRecommendation}>
-          <RefreshCw size={14} /> Re-evaluate Case
-        </button>
-      </div>
-    );
-  }
+  if (!recommendation) return null;
 
   const confidencePct = Math.round((recommendation.confidence || 0.94) * 100);
+  const isRuleFallback = Boolean(
+    recommendation.fallback ||
+    recommendation.providerStrategy?.toLowerCase().includes('fallback') ||
+    recommendation.providerStrategy?.toLowerCase().includes('rule')
+  );
+  const providerLabel = isRuleFallback ? 'rule-based (fallback)' : 'simulated';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Demo data badge */}
+      {isDemoData && (
+        <div
+          style={{
+            backgroundColor: '#fef3c7',
+            border: '1px solid #f59e0b',
+            color: '#b45309',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            fontSize: '12px',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <AlertTriangle size={15} />
+          <span>[DEMO DATA - AI API UNREACHABLE] Showing simulated reference recommendation</span>
+        </div>
+      )}
+
       {/* Action Notification Alert */}
       {actionSuccess && (
         <div
@@ -240,8 +484,58 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
         </div>
       )}
 
+      {/* Decision error banner */}
+      {decisionError && (
+        <div
+          style={{
+            backgroundColor: '#fef2f2',
+            color: '#b91c1c',
+            border: '1px solid #fecaca',
+            padding: '12px 16px',
+            borderRadius: '10px',
+            fontSize: '13px',
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <AlertTriangle size={18} /> {decisionError}
+        </div>
+      )}
+
+      {/* Link error banner with retry option */}
+      {linkError && (
+        <div
+          style={{
+            backgroundColor: '#fffbeb',
+            border: '1px solid #fde68a',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            color: '#92400e',
+            fontSize: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px'
+          }}
+        >
+          <div>
+            <strong>Link Warning:</strong> {linkError}
+          </div>
+          <button
+            className="co-btn co-btn-ghost co-btn-sm"
+            onClick={() => activeCaseNumber && handleRetryLink(activeCaseNumber)}
+            disabled={linking}
+            style={{ whiteSpace: 'nowrap' }}
+          >
+            {linking ? 'Linking...' : 'Retry Link'}
+          </button>
+        </div>
+      )}
+
       {/* Fallback Notice Banner if active */}
-      {isFallback && (
+      {isRuleFallback && !isDemoData && (
         <div
           style={{
             backgroundColor: '#fffbeb',
@@ -262,7 +556,7 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
         </div>
       )}
 
-      {/* Main AI Recommendation Card Matching Screenshot 11 */}
+      {/* Main AI Recommendation Card */}
       <div
         style={{
           backgroundColor: '#ffffff',
@@ -288,6 +582,11 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
             }}
           >
             <BrainCircuit size={20} color="#12A86B" /> AI recommendation
+            {activeCaseNumber && (
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>
+                ({activeCaseNumber})
+              </span>
+            )}
           </h3>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -303,7 +602,7 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
             >
               Confidence: {confidencePct}%
             </span>
-            {recommendation.priorityScore && (
+            {recommendation.priorityScore !== undefined && (
               <span
                 style={{
                   fontSize: '11px',
@@ -356,6 +655,21 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
           </div>
         </div>
 
+        {/* Provider Strategy row */}
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', marginBottom: '3px' }}>
+            Provider
+          </div>
+          <div style={{ fontSize: '13px', color: '#475569' }}>
+            <span style={{ fontWeight: 600 }}>{providerLabel}</span>
+            {recommendation.providerStrategy && (
+              <span style={{ color: '#64748b', marginLeft: '6px' }}>
+                ({recommendation.providerStrategy})
+              </span>
+            )}
+          </div>
+        </div>
+
         {recommendation.rationale && (
           <div
             style={{
@@ -371,7 +685,7 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
           </div>
         )}
 
-        {/* Action Buttons Row Matching Screenshot 11 */}
+        {/* Action Buttons Row */}
         <div
           style={{
             display: 'grid',
@@ -381,7 +695,7 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
             position: 'relative'
           }}
         >
-          {/* Approve Button (Green) */}
+          {/* Approve Button */}
           <button
             onClick={handleApprove}
             style={{
@@ -403,7 +717,7 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
             <Check size={16} strokeWidth={2.5} /> Approve
           </button>
 
-          {/* Modify Button (Blue) */}
+          {/* Modify Button */}
           <button
             onClick={() => setShowModifyModal(true)}
             style={{
@@ -425,7 +739,7 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
             <Edit size={15} /> Modify
           </button>
 
-          {/* Reject Button (Red) */}
+          {/* Reject Button */}
           <button
             onClick={() => setShowRejectModal(true)}
             style={{
@@ -447,7 +761,7 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
             <X size={16} strokeWidth={2.5} /> Reject
           </button>
 
-          {/* More Button (Dark Navy) */}
+          {/* More Button */}
           <button
             onClick={() => setShowMoreMenu(!showMoreMenu)}
             style={{
@@ -504,32 +818,50 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
               >
                 <Clock size={14} color="#d97706" /> Defer for Ground Verification
               </button>
-              <button
-                onClick={loadRecommendation}
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '9px 14px',
-                  fontSize: '12.5px',
-                  color: '#334155',
-                  background: 'transparent',
-                  border: 'none',
-                  borderTop: '1px solid #f1f5f9',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <RefreshCw size={14} color="#2563eb" /> Re-run Strategy Analysis
-              </button>
+              {activeCaseNumber && (
+                <button
+                  onClick={() => loadExistingCase(activeCaseNumber)}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '9px 14px',
+                    fontSize: '12.5px',
+                    color: '#334155',
+                    background: 'transparent',
+                    border: 'none',
+                    borderTop: '1px solid #f1f5f9',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <RefreshCw size={14} color="#2563eb" /> Reload Recommendation
+                </button>
+              )}
             </div>
           )}
         </div>
+
+        {/* Short hint under the decision buttons */}
+        <div
+          style={{
+            fontSize: '11.5px',
+            color: '#64748b',
+            textAlign: 'center',
+            marginTop: '4px',
+            lineHeight: 1.4,
+            padding: '6px 10px',
+            backgroundColor: '#f8fafc',
+            borderRadius: '6px'
+          }}
+        >
+          Advisory only: recording a decision does not change the request's status; use the status buttons above to advance the case.
+        </div>
       </div>
 
-      {/* Non-Destructive Duplicate Detection Card Matching Screenshot 11 */}
-      {(caseItem.duplicateOfId || caseItem.ref === 'CS-2341' || caseItem.id === 'c-2341') && (
+      {/* Duplicate detection card from real data if present */}
+      {caseReviewData?.possibleDuplicate && (
         <div
           style={{
             backgroundColor: '#ffffff',
@@ -556,15 +888,15 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
                 borderRadius: '999px'
               }}
             >
-              Medium Risk (74% Match)
+              {caseReviewData.duplicateRiskLevel || 'Medium'} Risk
             </span>
           </div>
 
           <div style={{ fontSize: '12.5px', color: '#475569' }}>
-            Suspected Overlap: <strong style={{ color: '#2563eb' }}>#2187 - Flood (Kandy)</strong>
+            Suspected Overlap: <strong style={{ color: '#2563eb' }}>{caseReviewData.possibleDuplicate}</strong>
           </div>
           <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.5 }}>
-            High semantic and geographical overlap with #2187. Both cases request food and shelter aid within Kandy flood operational sector.
+            Semantic and geographical overlap identified by AI Gateway duplicate analysis against recorded cases.
           </div>
           <div style={{ fontSize: '11px', fontWeight: 700, color: '#16a34a', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <ShieldCheck size={14} /> Flagged for Review (Non-destructive - original case intact)
@@ -619,9 +951,10 @@ export const AiRecommendationCard: React.FC<AiRecommendationCardProps> = ({
                 >
                   <option value="Disaster Relief">Disaster Relief</option>
                   <option value="Emergency Medical">Emergency Medical</option>
-                  <option value="Evacuation & Rescue">Evacuation &amp; Rescue</option>
-                  <option value="Food & Clean Water">Food &amp; Clean Water</option>
-                  <option value="Shelter & Relocation">Shelter &amp; Relocation</option>
+                  <option value="Shelter">Shelter</option>
+                  <option value="Food & Water">Food &amp; Water</option>
+                  <option value="Search & Rescue">Search &amp; Rescue</option>
+                  <option value="Medical & Evacuation">Medical &amp; Evacuation</option>
                 </select>
               </div>
 
