@@ -1,0 +1,150 @@
+/* =========================================================================
+   TRUE GOOGLE CHROME-STYLE CONNECTED TABS FOR RESQNEST.AI
+   ========================================================================= */
+
+.chrome-tabs-wrapper {
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+/* The horizontal bar that holds the tabs */
+.chrome-tabs-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 8px 0 8px;
+  margin-bottom: -1px; /* Crucial: overlaps exactly with content panel top border */
+  position: relative;
+  z-index: 5;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chrome-tabs-bar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.chrome-tabs-bar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chrome-tabs-bar::-webkit-scrollbar-thumb {
+  background: #D5E4F3;
+  border-radius: 4px;
+}
+
+/* Individual Chrome Tab */
+.chrome-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 20px;
+  min-height: 44px;
+  border: 1px solid #D5E4F3;
+  border-bottom: none;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  background-color: #E2EEFA; /* Subtle muted light blue-grey for inactive tab */
+  color: #526784;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease;
+  z-index: 1;
+}
+
+.chrome-tab:focus-visible {
+  outline: 2px solid #0866C6;
+  outline-offset: -2px;
+}
+
+/* Inactive Tab Hover Pop-up effect */
+.chrome-tab:hover:not(.chrome-tab-active) {
+  background-color: #EDF6FF;
+  color: #102B5C;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(11, 59, 112, 0.08);
+  border-color: #B9D5F0;
+  z-index: 3;
+}
+
+/* ACTIVE CHROME TAB:
+   - Matches exactly the content panel background (#FFFFFF)
+   - Bottom border is COMPLETELY GONE
+   - Overlaps the content panel's top border so there is NO LINE separating them
+   - Seamless continuous shape into the content panel
+*/
+.chrome-tab.chrome-tab-active {
+  background-color: #FFFFFF !important;
+  color: #0B3B70 !important;
+  font-weight: 800 !important;
+  border: 1px solid #D5E4F3 !important;
+  border-bottom: 2px solid #FFFFFF !important; /* Masks the line below it */
+  border-top: 3px solid #0866C6 !important; /* Crisp blue accent banner at top */
+  padding-top: 9px;
+  padding-bottom: 12px;
+  margin-bottom: -2px; /* Pulls bottom flush over container border */
+  box-shadow: 0 -3px 10px rgba(11, 59, 112, 0.05);
+  transform: none !important;
+  z-index: 10 !important; /* Sits on top of container top border */
+}
+
+.chrome-tab-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chrome-tab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.2;
+}
+
+.chrome-tab-count {
+  font-weight: 600;
+  color: #526784;
+}
+
+.chrome-tab-count-active {
+  font-weight: 800;
+  color: #0866C6;
+}
+
+/* Connected Content Container (The Browser Viewport Body) */
+.chrome-tabs-content {
+  background-color: #FFFFFF;
+  border: 1px solid #D5E4F3;
+  border-radius: 0 14px 14px 14px; /* Connected seamlessly with active tab */
+  box-shadow: 0 4px 14px rgba(11, 59, 112, 0.04);
+  padding: 28px 32px;
+  position: relative;
+  z-index: 2;
+  margin-top: 0;
+}
+
+/* Flatten nested card borders inside the connected body so they don't look double-boxed */
+.chrome-tabs-content > .card {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+@media (max-width: 768px) {
+  .chrome-tabs-content {
+    padding: 20px 16px;
+    border-radius: 12px;
+  }
+  .chrome-tab {
+    padding: 9px 14px;
+    font-size: 12.5px;
+  }
+}

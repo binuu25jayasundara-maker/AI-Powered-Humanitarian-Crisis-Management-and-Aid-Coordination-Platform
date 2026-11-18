@@ -1,0 +1,21 @@
+<Solution>
+  <Project Path="ResQnet.Member1.Api/ResQnet.Member1.Api.csproj" />
+  <Project Path="ResQnet.Member1.Application/ResQnet.Member1.Application.csproj" />
+  <Project Path="ResQnet.Member1.Domain/ResQnet.Member1.Domain.csproj" />
+  <Project Path="ResQnet.Member1.Infrastructure/ResQnet.Member1.Infrastructure.csproj" />
+  <Project Path="ResQnet.Member1.Tests/ResQnet.Member1.Tests.csproj" />
+  <Project Path="ResQnet.Member4.Api/ResQnet.Member4.Api.csproj" />
+  <Project Path="ResQnet.Member4.Application/ResQnet.Member4.Application.csproj" />
+  <Project Path="ResQnet.Member4.Domain/ResQnet.Member4.Domain.csproj" />
+  <Project Path="ResQnet.Member4.Infrastructure/ResQnet.Member4.Infrastructure.csproj" />
+  <Project Path="ResQnet.Member4.Tests/ResQnet.Member4.Tests.csproj" />
+  <Project Path="ResQnet.Member5.Api/ResQnet.Member5.Api.csproj" />
+  <Project Path="ResQnet.Member5.Tests/ResQnet.Member5.Tests.csproj" />
+  <Project Path="ResQnet.Member6.Api/ResQnet.Member6.Api.csproj" />
+  <Project Path="ResQnet.Member6.Application/ResQnet.Member6.Application.csproj" />
+  <Project Path="ResQnet.Member6.Domain/ResQnet.Member6.Domain.csproj" />
+  <Project Path="ResQnet.Member6.Infrastructure/ResQnet.Member6.Infrastructure.csproj" />
+  <Project Path="ResQnet.Member6.Tests/ResQnet.Member6.Tests.csproj" />
+  <Project Path="ResQnet.UnifiedApi/ResQnet.UnifiedApi.csproj" />
+  <Project Path="ResQnet.UnifiedApi.Tests/ResQnet.UnifiedApi.Tests.csproj" />
+</Solution>
