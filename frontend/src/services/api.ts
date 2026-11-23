@@ -424,6 +424,25 @@ const fallbackRecommendation: TaskMatchingRecommendation = {
 // API Implementation
 // ==========================================
 
+type NotificationRequest = {
+  recipient: string;
+  channel: string;
+  subject: string;
+  body: string;
+  idempotencyKey?: string;
+};
+
+/** Never invent a success: if the API cannot confirm delivery, report failure. */
+const failedNotificationResult = (req: NotificationRequest, errorMessage: string): NotificationResult => ({
+  isSuccess: false,
+  messageId: '',
+  channelUsed: req.channel,
+  recipient: req.recipient,
+  errorMessage,
+  wasDuplicateSuppressed: false,
+  deliveryMode: 'Failed',
+  dispatchedAt: new Date().toISOString()
+});
 
 export const api = {
   // ==========================================
@@ -431,18 +450,28 @@ export const api = {
   // ==========================================
   // Authentication
   async login(email: string, password: string, role?: string): Promise<AuthResponse> {
+    let res: Response | null = null;
     try {
-      const res = await fetch(`${AUTH_API_URL}/auth/login`, {
+      res = await fetch(`${AUTH_API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role })
       });
-      if (res.ok) {
-        const json: ApiResponse<AuthResponse> = await res.json();
+    } catch {
+      // Backend unreachable: fall through to mock credentials
+    }
+
+    if (res) {
+      const json: ApiResponse<AuthResponse> | null = await res.json().catch(() => null);
+      if (res.ok && json?.data) {
         return json.data;
       }
-    } catch {
-      // Backend offline: use mock credentials
+      // Only fall back to demo data when the auth endpoint is not deployed (404).
+      // Any other response is a real authentication failure and must be surfaced
+      // instead of silently logging the user in with a mock token.
+      if (res.status !== 404) {
+        throw new Error(json?.message || json?.errors?.[0] || 'Invalid email or password.');
+      }
     }
 
     // Mock fallback: check memory mock users and persisted registered users
@@ -480,18 +509,25 @@ export const api = {
   },
 
   async register(fullName: string, email: string, password: string, role: string, organizationId?: string): Promise<AuthResponse> {
+    let res: Response | null = null;
     try {
-      const res = await fetch(`${AUTH_API_URL}/auth/register`, {
+      res = await fetch(`${AUTH_API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullName, email, password, role, organizationId })
       });
-      if (res.ok) {
-        const json: ApiResponse<AuthResponse> = await res.json();
+    } catch {
+      // Backend unreachable: fall through to mock registration
+    }
+
+    if (res) {
+      const json: ApiResponse<AuthResponse> | null = await res.json().catch(() => null);
+      if (res.ok && json?.data) {
         return json.data;
       }
-    } catch {
-      // Fallback
+      if (res.status !== 404) {
+        throw new Error(json?.message || json?.errors?.[0] || 'Registration failed.');
+      }
     }
 
     const newUser: User = {
@@ -1292,15 +1328,9 @@ export const api = {
     return newVol;
   },
 
-  async sendNotification(req: {
-    recipient: string;
-    channel: string;
-    subject: string;
-    body: string;
-    idempotencyKey?: string;
-  }): Promise<NotificationResult> {
+  async sendNotification(req: NotificationRequest): Promise<NotificationResult> {
+    const token = localStorage.getItem('resqnet_token');
     try {
-      const token = localStorage.getItem('resqnet_token');
       const res = await fetch(`${VOLUNTEERS_API_URL}/notifications/send`, {
         method: 'POST',
         headers: {
@@ -1309,17 +1339,42 @@ export const api = {
         },
         body: JSON.stringify(req)
       });
-      if (res.ok) return await res.json();
-    } catch {}
 
-    return {
-      isSuccess: true,
-      messageId: 'MSG-' + Math.floor(100000 + Math.random() * 900000),
-      channelUsed: req.channel,
-      recipient: req.recipient,
-      wasDuplicateSuppressed: false,
-      dispatchedAt: new Date().toISOString()
-    };
+      const payload = await res.json().catch(() => null) as
+        | (Partial<NotificationResult> & { message?: string; errorMessage?: string })
+        | null;
+
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          return failedNotificationResult(req, 'Not authorised to dispatch notifications. Sign in with a staff account.');
+        }
+        return failedNotificationResult(
+          req,
+          payload?.message || payload?.errorMessage || `Notification service returned HTTP ${res.status}.`
+        );
+      }
+
+      if (!payload) {
+        return failedNotificationResult(req, 'Notification service returned an unreadable response.');
+      }
+
+      return {
+        isSuccess: Boolean(payload.isSuccess),
+        messageId: payload.messageId ?? '',
+        channelUsed: payload.channelUsed ?? req.channel,
+        recipient: payload.recipient ?? req.recipient,
+        errorMessage: payload.errorMessage,
+        wasDuplicateSuppressed: Boolean(payload.wasDuplicateSuppressed),
+        deliveryMode: payload.deliveryMode,
+        dispatchedAt: payload.dispatchedAt ?? new Date().toISOString()
+      };
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : '';
+      return failedNotificationResult(
+        req,
+        `Notification service is unavailable at ${VOLUNTEERS_API_URL}. ${detail}`.trim()
+      );
+    }
   },
 
   async getNotificationHistory(): Promise<NotificationRecord[]> {

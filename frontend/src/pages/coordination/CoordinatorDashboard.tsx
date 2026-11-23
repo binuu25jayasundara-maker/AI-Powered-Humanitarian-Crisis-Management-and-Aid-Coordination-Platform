@@ -30,7 +30,7 @@ import {
 import { getRequestsPerHourSeries } from '../../services/coordinationApi';
 
 export const CoordinatorDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [cases, setCases] = useState<CrisisCase[]>([]);
   const [shelters, setShelters] = useState<Shelter[]>([]);
@@ -98,14 +98,27 @@ export const CoordinatorDashboard: React.FC = () => {
   }
 
   if (error) {
-    const isAuth = error.toLowerCase().includes('log in') || error.toLowerCase().includes('authentication') || error.includes('401');
+    const lower = error.toLowerCase();
+    const isAuth =
+      lower.includes('log in') ||
+      lower.includes('authentication') ||
+      lower.includes('access denied') ||
+      lower.includes('permission') ||
+      error.includes('401') ||
+      error.includes('403');
+
+    const handleRelogin = () => {
+      logout();
+      navigate('/login');
+    };
+
     return (
       <div className="co-page">
         <Panel>
           <EmptyState title="Could not load dashboard data" message={error} />
           <div style={{ textAlign: 'center', marginTop: 16 }}>
             {isAuth ? (
-              <button className="co-btn co-btn-blue" onClick={() => navigate('/login')}>Go to Login</button>
+              <button className="co-btn co-btn-blue" onClick={handleRelogin}>Log in again</button>
             ) : (
               <button className="co-btn co-btn-blue" onClick={loadData}>Try again</button>
             )}

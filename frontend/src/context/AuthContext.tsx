@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { User, AuthResponse } from '../types';
 import { api } from '../services/api';
 
@@ -14,39 +14,109 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('resqnet_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+const TOKEN_KEY = 'resqnet_token';
+const USER_KEY = 'resqnet_user';
 
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('resqnet_token');
-  });
+interface StoredSession {
+  user: User | null;
+  token: string | null;
+}
+
+const decodeBase64Url = (value: string): string => {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+};
+
+/** Returns the JWT payload, or null when the value is not a decodable JWT. */
+const decodeJwtPayload = (token: string): Record<string, any> | null => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(decodeBase64Url(parts[1]));
+    return payload && typeof payload === 'object' ? payload : null;
+  } catch {
+    return null;
+  }
+};
+
+const clearStoredSession = () => {
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(TOKEN_KEY);
+};
+
+/**
+ * Reads the persisted session and discards it when it is not usable:
+ * - missing / malformed / expired token (including legacy mock tokens)
+ * - token role that does not match the stored user role
+ *
+ * This prevents a stale token from being sent to the API, which used to
+ * surface as "Access denied" (HTTP 403) on the dashboards after a refresh.
+ */
+const readStoredSession = (): StoredSession => {
+  const rawUser = localStorage.getItem(USER_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
+
+  if (!rawUser || !token) {
+    clearStoredSession();
+    return { user: null, token: null };
+  }
+
+  let user: User;
+  try {
+    user = JSON.parse(rawUser) as User;
+  } catch {
+    clearStoredSession();
+    return { user: null, token: null };
+  }
+
+  const payload = decodeJwtPayload(token);
+  const tokenRole = payload?.role
+    ?? payload?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+  const expirySeconds = typeof payload?.exp === 'number' ? payload.exp : null;
+
+  const isUsable =
+    payload !== null &&
+    expirySeconds !== null &&
+    expirySeconds * 1000 > Date.now() &&
+    typeof tokenRole === 'string' &&
+    tokenRole === user.role;
+
+  if (!isUsable) {
+    clearStoredSession();
+    return { user: null, token: null };
+  }
+
+  return { user, token };
+};
+
+const persistSession = (res: AuthResponse): StoredSession => {
+  localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+  localStorage.setItem(TOKEN_KEY, res.token);
+  return { user: res.user, token: res.token };
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [session, setSession] = useState<StoredSession>(() => readStoredSession());
+  const { user, token } = session;
 
   const login = async (email: string, password: string, role?: string): Promise<User> => {
     const res: AuthResponse = await api.login(email, password, role);
-    setUser(res.user);
-    setToken(res.token);
-    localStorage.setItem('resqnet_user', JSON.stringify(res.user));
-    localStorage.setItem('resqnet_token', res.token);
+    setSession(persistSession(res));
     return res.user;
   };
 
   const register = async (fullName: string, email: string, password: string, role: string, orgId?: string): Promise<User> => {
     const res: AuthResponse = await api.register(fullName, email, password, role, orgId);
-    setUser(res.user);
-    setToken(res.token);
-    localStorage.setItem('resqnet_user', JSON.stringify(res.user));
-    localStorage.setItem('resqnet_token', res.token);
+    setSession(persistSession(res));
     return res.user;
   };
 
   const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('resqnet_user');
-    localStorage.removeItem('resqnet_token');
+    clearStoredSession();
+    setSession({ user: null, token: null });
   };
 
   const hasRole = (roles: string[]) => {

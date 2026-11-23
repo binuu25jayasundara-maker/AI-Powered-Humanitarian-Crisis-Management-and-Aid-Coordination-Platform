@@ -5,7 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ResQnet.Member4.Application.Common;
+using ResQnet.Application.Common;
 using ResQnet.Member4.Application.DTOs;
 using ResQnet.Member4.Application.Interfaces;
 
@@ -48,8 +48,10 @@ namespace ResQnet.Member4.Api.Controllers
         public async Task<ActionResult<ApiResponse<bool>>> SubmitHumanDecision(string caseNumber, [FromBody] HumanDecisionRequest request)
         {
             // Requirement: reviewer identity comes from the JWT token, not from the request body.
-            // Member1 adds "email" via JwtRegisteredClaimNames.Email (literal "email" claim name).
-            var reviewerEmail = User.FindFirstValue(JwtRegisteredClaimNames.Email)
+            // JwtBearer maps the inbound "email" claim to ClaimTypes.Email by default, so check
+            // that first; fall back to the raw JWT claim name and the display name.
+            var reviewerEmail = User.FindFirstValue(ClaimTypes.Email)
+                ?? User.FindFirstValue(JwtRegisteredClaimNames.Email)
                 ?? User.FindFirstValue("email")
                 ?? User.Identity?.Name;
 

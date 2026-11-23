@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Check, AlertTriangle, Shield } from 'lucide-react';
+import { Check, AlertTriangle, Shield, Eye, EyeOff } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -9,6 +9,7 @@ export const LoginPage: React.FC = () => {
 
   const [email, setEmail] = useState('citizen@resqnet.org');
   const [password, setPassword] = useState('Password@123');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState('Citizen');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -71,12 +72,11 @@ export const LoginPage: React.FC = () => {
         width: '100%',
         maxWidth: '900px',
         display: 'flex',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         alignItems: 'center',
         color: '#FFFFFF',
         marginBottom: '16px'
       }}>
-        <div style={{ fontSize: '14px', fontWeight: 700 }}>1 · Login / Register</div>
         <div style={{
           backgroundColor: 'rgba(255,255,255,0.15)',
           color: '#FFFFFF',
@@ -222,14 +222,39 @@ export const LoginPage: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               style={{ padding: '11px 14px', fontSize: '13px', borderColor: '#D5E4F3' }}
             />
-            <input
-              type="password"
-              required
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ padding: '11px 14px', fontSize: '13px', borderColor: '#D5E4F3' }}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{ padding: '11px 44px 11px 14px', fontSize: '13px', borderColor: '#D5E4F3' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute',
+                  right: '6px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '32px',
+                  height: '32px',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'transparent',
+                  color: '#526784',
+                  borderRadius: '8px'
+                }}
+              >
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
             <select
               value={role}
               onChange={(e) => handleRoleChange(e.target.value)}

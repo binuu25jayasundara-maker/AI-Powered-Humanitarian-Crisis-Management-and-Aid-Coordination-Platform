@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Check, Shield } from 'lucide-react';
+import { Check, Shield, Eye, EyeOff } from 'lucide-react';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +11,8 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState<'Citizen' | 'DonorAndVolunteer'>('Citizen');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -71,12 +73,11 @@ export const RegisterPage: React.FC = () => {
         width: '100%',
         maxWidth: '900px',
         display: 'flex',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         alignItems: 'center',
         color: '#FFFFFF',
         marginBottom: '16px'
       }}>
-        <div style={{ fontSize: '14px', fontWeight: 700 }}>1 · Login / Register</div>
         <div style={{
           backgroundColor: 'rgba(255,255,255,0.15)',
           color: '#FFFFFF',
@@ -165,8 +166,58 @@ export const RegisterPage: React.FC = () => {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <input type="text" required placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} style={{ borderColor: '#D5E4F3' }} />
             <input type="email" required placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} style={{ borderColor: '#D5E4F3' }} />
-            <input type="password" required placeholder="Password (min 6 characters)" value={password} onChange={e => setPassword(e.target.value)} style={{ borderColor: '#D5E4F3' }} />
-            <input type="password" required placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={{ borderColor: '#D5E4F3' }} />
+            <div style={{ position: 'relative' }}>
+              <input type={showPassword ? 'text' : 'password'} required placeholder="Password (min 6 characters)" value={password} onChange={e => setPassword(e.target.value)} style={{ borderColor: '#D5E4F3', paddingRight: '44px' }} />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute',
+                  right: '6px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '32px',
+                  height: '32px',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'transparent',
+                  color: '#526784',
+                  borderRadius: '8px'
+                }}
+              >
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
+            <div style={{ position: 'relative' }}>
+              <input type={showConfirmPassword ? 'text' : 'password'} required placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} style={{ borderColor: '#D5E4F3', paddingRight: '44px' }} />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute',
+                  right: '6px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '32px',
+                  height: '32px',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'transparent',
+                  color: '#526784',
+                  borderRadius: '8px'
+                }}
+              >
+                {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
             <div>
               <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '4px' }}>
                 Select Your Role *

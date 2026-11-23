@@ -174,15 +174,15 @@ WHEN NOT MATCHED THEN
 -- BCrypt representation generated at runtime
 MERGE INTO [dbo].[Users] AS target
 USING (VALUES
-    ('Platform Administrator', 'admin@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'SystemAdmin', '11111111-1111-1111-1111-111111111111', '+94 77 123 4567', 1),
-    ('Chaminda Silva', 'coordinator@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'EmergencyCoordinator', '11111111-1111-1111-1111-111111111111', '+94 77 234 5678', 1),
-    ('Nadeesha Perera', 'casemanager@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'CaseManager', '11111111-1111-1111-1111-111111111111', '+94 77 345 6789', 1),
-    ('Kasun Jayawardena', 'volunteer.coord@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'VolunteerCoordinator', '22222222-2222-2222-2222-222222222222', '+94 77 456 7890', 1),
-    ('Anura Fernando', 'donor.officer@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'DonorOfficer', '22222222-2222-2222-2222-222222222222', '+94 77 567 8901', 1),
-    ('Sunil Weerasinghe', 'citizen@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'Citizen', NULL, '+94 77 678 9012', 1),
-    ('Logistics Manager', 'logistics@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'LogisticsManager', '11111111-1111-1111-1111-111111111111', '+94 77 789 0123', 1),
-    ('Shelter Administrator', 'shelter@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'ShelterAdmin', '11111111-1111-1111-1111-111111111111', '+94 77 890 1234', 1),
-    ('Partner Officer', 'partner@resqnet.org', '$2a$11$F6n1q7vjXh37pQ5Fk22D4euOQW8/pYmP50l72L4uWlKzU0K7o4r6S', 'PartnerOfficer', '22222222-2222-2222-2222-222222222222', '+94 77 901 2345', 1)
+    ('Platform Administrator', 'admin@resqnet.org', '$2a$11$NsntVFmv9BtohB744CW89eWxVTD.zwritpmH87ZCsM3XoeBHwNB56', 'SystemAdmin', '11111111-1111-1111-1111-111111111111', '+94 77 123 4567', 1),
+    ('Chaminda Silva', 'coordinator@resqnet.org', '$2a$11$NsntVFmv9BtohB744CW89eWxVTD.zwritpmH87ZCsM3XoeBHwNB56', 'EmergencyCoordinator', '11111111-1111-1111-1111-111111111111', '+94 77 234 5678', 1),
+    ('Nadeesha Perera', 'casemanager@resqnet.org', '$2a$11$NsntVFmv9BtohB744CW89eWxVTD.zwritpmH87ZCsM3XoeBHwNB56', 'CaseManager', '11111111-1111-1111-1111-111111111111', '+94 77 345 6789', 1),
+    ('Kasun Jayawardena', 'volunteer.coord@resqnet.org', '$2a$11$NsntVFmv9BtohB744CW89eWxVTD.zwritpmH87ZCsM3XoeBHwNB56', 'VolunteerCoordinator', '22222222-2222-2222-2222-222222222222', '+94 77 456 7890', 1),
+    ('Anura Fernando', 'donor.officer@resqnet.org', '$2a$11$NsntVFmv9BtohB744CW89eWxVTD.zwritpmH87ZCsM3XoeBHwNB56', 'DonorOfficer', '22222222-2222-2222-2222-222222222222', '+94 77 567 8901', 1),
+    ('Sunil Weerasinghe', 'citizen@resqnet.org', '$2a$11$NsntVFmv9BtohB744CW89eWxVTD.zwritpmH87ZCsM3XoeBHwNB56', 'Citizen', NULL, '+94 77 678 9012', 1),
+    ('Logistics Manager', 'logistics@resqnet.org', '$2a$11$NsntVFmv9BtohB744CW89eWxVTD.zwritpmH87ZCsM3XoeBHwNB56', 'LogisticsManager', '11111111-1111-1111-1111-111111111111', '+94 77 789 0123', 1),
+    ('Shelter Administrator', 'shelter@resqnet.org', '$2a$11$NsntVFmv9BtohB744CW89eWxVTD.zwritpmH87ZCsM3XoeBHwNB56', 'ShelterAdmin', '11111111-1111-1111-1111-111111111111', '+94 77 890 1234', 1),
+    ('Partner Officer', 'partner@resqnet.org', '$2a$11$NsntVFmv9BtohB744CW89eWxVTD.zwritpmH87ZCsM3XoeBHwNB56', 'PartnerOfficer', '22222222-2222-2222-2222-222222222222', '+94 77 901 2345', 1)
 ) AS source ([FullName], [Email], [PasswordHash], [Role], [OrganizationId], [PhoneNumber], [IsActive])
 ON target.[Email] = source.[Email]
 WHEN NOT MATCHED THEN

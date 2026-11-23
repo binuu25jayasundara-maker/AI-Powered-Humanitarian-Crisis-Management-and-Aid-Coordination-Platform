@@ -325,6 +325,8 @@ export interface NotificationResult {
   recipient: string;
   errorMessage?: string;
   wasDuplicateSuppressed: boolean;
+  /** Live | Simulated | Duplicate | Failed */
+  deliveryMode?: string;
   dispatchedAt: string;
 }
 

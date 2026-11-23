@@ -35,8 +35,17 @@ export const CommunicationCenterPage: React.FC = () => {
       });
       setDispatchResult(res);
       await loadHistory();
-    } catch {
-      alert('Failed to send notification');
+    } catch (err) {
+      setDispatchResult({
+        isSuccess: false,
+        messageId: '',
+        channelUsed: channel,
+        recipient,
+        errorMessage: err instanceof Error ? err.message : 'Unexpected error while dispatching notification.',
+        wasDuplicateSuppressed: false,
+        deliveryMode: 'Failed',
+        dispatchedAt: new Date().toISOString()
+      });
     } finally {
       setLoading(false);
     }
@@ -46,6 +55,29 @@ export const CommunicationCenterPage: React.FC = () => {
     setIdempotencyKey(`KEY-${Math.floor(100000 + Math.random() * 900000)}`);
     setDispatchResult(null);
   };
+
+  const dispatchFailed = dispatchResult?.isSuccess === false;
+  const dispatchDuplicated = dispatchResult?.isSuccess === true && dispatchResult.wasDuplicateSuppressed;
+  const dispatchSimulated = dispatchResult?.isSuccess === true
+    && !dispatchDuplicated
+    && dispatchResult.deliveryMode === 'Simulated';
+  const statusColor = dispatchFailed
+    ? '#dc2626'
+    : (dispatchDuplicated || dispatchSimulated) ? '#d97706' : '#16a34a';
+  const statusHeading = dispatchFailed
+    ? 'Notification Dispatch Failed!'
+    : dispatchDuplicated
+      ? 'Duplicate Request Suppressed!'
+      : dispatchSimulated
+        ? 'Simulated Dispatch (No Email Sent)'
+        : 'Notification Dispatched Successfully!';
+  const statusText = dispatchFailed
+    ? 'Delivery Failed'
+    : dispatchDuplicated
+      ? 'Suppressed (Cached Idempotent OK)'
+      : dispatchSimulated
+        ? 'Simulated (no external delivery)'
+        : 'Delivered to Gateway';
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: '1400px', margin: '0 auto' }}>
@@ -234,31 +266,29 @@ export const CommunicationCenterPage: React.FC = () => {
           {dispatchResult && (
             <div className="card" style={{
               padding: '22px',
-              borderLeft: dispatchResult.wasDuplicateSuppressed ? '5px solid #d97706' : '5px solid #16a34a'
+              borderLeft: `5px solid ${statusColor}`
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                {dispatchResult.wasDuplicateSuppressed ? (
-                  <>
-                    <AlertCircle size={20} color="#d97706" />
-                    <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#d97706' }}>
-                      Duplicate Request Suppressed!
-                    </h4>
-                  </>
+                {statusColor === '#16a34a' ? (
+                  <CheckCircle2 size={20} color={statusColor} />
                 ) : (
-                  <>
-                    <CheckCircle2 size={20} color="#16a34a" />
-                    <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#16a34a' }}>
-                      Notification Dispatched Successfully!
-                    </h4>
-                  </>
+                  <AlertCircle size={20} color={statusColor} />
                 )}
+                <h4 style={{ fontSize: '16px', fontWeight: 800, color: statusColor }}>
+                  {statusHeading}
+                </h4>
               </div>
               <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.6' }}>
                 <div><strong>Channel Factory Resolved:</strong> {dispatchResult.channelUsed}Channel</div>
                 <div><strong>Recipient:</strong> {dispatchResult.recipient}</div>
-                <div><strong>Status:</strong> {dispatchResult.wasDuplicateSuppressed ? 'Suppressed (Cached Idempotent OK)' : 'Delivered to Gateway'}</div>
+                <div><strong>Status:</strong> {statusText}</div>
+                {dispatchResult.deliveryMode && (
+                  <div><strong>Delivery Mode:</strong> {dispatchResult.deliveryMode}</div>
+                )}
                 {dispatchResult.errorMessage && (
-                  <div style={{ color: '#d97706', marginTop: '4px' }}>{dispatchResult.errorMessage}</div>
+                  <div style={{ color: statusColor, marginTop: '4px', fontWeight: 600 }}>
+                    {dispatchResult.errorMessage}
+                  </div>
                 )}
               </div>
             </div>

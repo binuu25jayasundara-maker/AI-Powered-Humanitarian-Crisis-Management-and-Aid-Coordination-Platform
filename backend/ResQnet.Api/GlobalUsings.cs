@@ -1,0 +1,15 @@
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.AspNetCore.Authorization;
+global using ResQnet.Domain.Entities;
+global using ResQnet.Member1.Domain.Entities;
+global using ResQnet.Member4.Domain.Entities;
+global using ResQnet.Member5.Api.Models;
+global using ResQnet.Member6.Domain.Entities;
+global using ResQnet.UnifiedApi.Models;
+global using ResQnet.Infrastructure.Data;
+global using ResQnet.Application.Common;
